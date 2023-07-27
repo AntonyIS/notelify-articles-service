@@ -7,6 +7,9 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/AntonyIS/notlify-content-svc/config"
+	"github.com/AntonyIS/notlify-content-svc/internal/adapters/logger"
+	"github.com/AntonyIS/notlify-content-svc/internal/core/domain"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/service/rds/rdsutils"
 	_ "github.com/lib/pq"
@@ -20,7 +23,7 @@ type PostgresDBClient struct {
 
 func NewPostgresClient(config config.Config, logger logger.LoggerType) (*PostgresDBClient, error) {
 	databaseName := config.DatabaseName
-	databaseUserTable := config.UserTable
+	databaseContentTable := config.UserTable
 	databaseUser := config.DatabaseUser
 	databasePassword := config.DatabasePassword
 	databasePort := config.DatabasePort
@@ -62,102 +65,80 @@ func NewPostgresClient(config config.Config, logger logger.LoggerType) (*Postgre
 	}
 
 	// Create users table
-	migrate(db, databaseUserTable)
+	migrate(db, databaseContentTable)
 
-	return &PostgresDBClient{db: db, tablename: databaseUserTable, loggerService: logger}, nil
+	return &PostgresDBClient{db: db, tablename: databaseContentTable, loggerService: logger}, nil
 }
 
-func (psql *PostgresDBClient) CreateUser(user *domain.User) (*domain.User, error) {
+func (psql *PostgresDBClient) CreateUser(content *domain.Content) (*domain.Content, error) {
 	queryString := fmt.Sprintf(
 		`INSERT INTO %s 
-			(id,firstname,lastname,email,password,handle,about,profile_image,following,followers) 
+			(content_id,creator_id,title,body,images,vidoes,publication_date) 
 			VALUES 
-			($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+			($1, $2, $3, $4, $5, $6, $7)`,
 		psql.tablename)
-
-	_, err := psql.db.Exec(queryString, user.Id, user.Firstname, user.Lastname, user.Email, user.Password, user.Handle, user.About, user.ProfileImage, user.Following, user.Followers)
-
-	if err != nil {
-		psql.loggerService.PostLogMessage(err.Error())
-		return nil, err
-	}
-
-	return user, nil
-}
-
-func (psql *PostgresDBClient) ReadUser(id string) (*domain.User, error) {
-	var user domain.User
-	queryString := fmt.Sprintf(`SELECT id,firstname, lastname,email, handle,about,profile_image,following, followers FROM %s WHERE id=$1`, psql.tablename)
-	err := psql.db.QueryRow(queryString, id).Scan(&user.Id, &user.Firstname, &user.Lastname, &user.Email, &user.Handle, &user.About, &user.ProfileImage, &user.Following, &user.Followers)
-	if err != nil {
-		psql.loggerService.PostLogMessage(err.Error())
-		return nil, err
-	}
-	contents, err := psql.readUserContent(id)
+	_, err := psql.db.Exec(queryString, content.ContentId, content.CreatorId, content.Title, content.Body, content.Images, content.Videos, content.PublicationDate)
 
 	if err != nil {
 		psql.loggerService.PostLogMessage(err.Error())
 		return nil, err
 	}
-	user.Contents = contents
-	return &user, nil
+
+	return content, nil
 }
 
-func (psql *PostgresDBClient) ReadUserWithEmail(email string) (*domain.User, error) {
-	var user domain.User
-	queryString := fmt.Sprintf(`SELECT id,firstname, lastname,email, handle,about,profile_image,following, followers FROM %s WHERE email=$1`, psql.tablename)
-	err := psql.db.QueryRow(queryString, email).Scan(&user.Id, &user.Firstname, &user.Lastname, &user.Email, &user.Handle, &user.About, &user.ProfileImage, &user.Following, &user.Followers)
+func (psql *PostgresDBClient) ReadContent(id string) (*domain.Content, error) {
+	var content domain.Content
+	queryString := fmt.Sprintf(`SELECT content_id,creator_id,title,body,images,vidoes,publication_date FROM %s WHERE content_id=$1`, psql.tablename)
+	err := psql.db.QueryRow(queryString, id).Scan(&content.ContentId, &content.CreatorId, &content.Title, &content.Body, &content.Images, &content.Videos, &content.PublicationDate)
 	if err != nil {
+		psql.loggerService.PostLogMessage(err.Error())
 		return nil, err
 	}
 
-	return &user, nil
+	return &content, nil
 }
 
-func (psql *PostgresDBClient) ReadUsers() ([]domain.User, error) {
+func (psql *PostgresDBClient) ReadContents() ([]domain.Content, error) {
 	rows, err := psql.db.Query(fmt.Sprintf("SELECT * FROM %s", psql.tablename))
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	users := []domain.User{}
+	contents := []domain.Content{}
 	for rows.Next() {
-		var user domain.User
+		var content domain.Content
 
-		if err := rows.Scan(&user.Id, &user.Firstname, &user.Lastname, &user.Email, &user.Password, &user.Handle, &user.About, &user.ProfileImage, &user.Following, &user.Followers); err != nil {
+		if err := rows.Scan(&content.ContentId, &content.CreatorId, &content.Title, &content.Body, &content.Images, &content.Videos, &content.PublicationDate); err != nil {
 			psql.loggerService.PostLogMessage(err.Error())
 			return nil, err
 		}
 
-		users = append(users, user)
+		contents = append(contents, content)
 
 	}
-	return users, nil
+	return contents, nil
 }
 
-func (psql *PostgresDBClient) UpdateUser(user *domain.User) (*domain.User, error) {
+func (psql *PostgresDBClient) UpdateContent(content *domain.Content) (*domain.Content, error) {
 	queryString := fmt.Sprintf(`UPDATE %s SET 
-		firstname = $2,
-		lastname = $3,
-		handle = $4,
-		about = $5,
-		profile_image = $6,
-		following = $7,
-		followers = $8
-		WHERE id =$1
-
+		title = $2,
+		body = $3,
+		images = $4,
+		videos = $5,
+		publication_date = $6
 	`, psql.tablename)
 
-	_, err := psql.db.Exec(queryString, user.Id, user.Firstname, user.Lastname, user.Handle, user.About, user.ProfileImage, user.Following, user.Followers)
+	_, err := psql.db.Exec(queryString, content.Title, content.Body, content.Images, content.Videos, content.PublicationDate)
 	if err != nil {
 		psql.loggerService.PostLogMessage(err.Error())
 		return nil, err
 	}
-	return user, nil
+	return content, nil
 }
 
-func (psql *PostgresDBClient) DeleteUser(id string) (string, error) {
+func (psql *PostgresDBClient) DeleteContent(id string) (string, error) {
 
 	queryString := fmt.Sprintf(`DELETE FROM %s WHERE id = $1`, psql.tablename)
 	_, err := psql.db.Exec(queryString, id)
