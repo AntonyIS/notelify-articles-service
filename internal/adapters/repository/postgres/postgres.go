@@ -2,10 +2,7 @@ package postgres
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 
 	"github.com/AntonyIS/notlify-content-svc/config"
 	"github.com/AntonyIS/notlify-content-svc/internal/adapters/logger"
@@ -23,7 +20,7 @@ type PostgresDBClient struct {
 
 func NewPostgresClient(config config.Config, logger logger.LoggerType) (*PostgresDBClient, error) {
 	databaseName := config.DatabaseName
-	databaseContentTable := config.UserTable
+	databaseContentTable := config.ContentTable
 	databaseUser := config.DatabaseUser
 	databasePassword := config.DatabasePassword
 	databasePort := config.DatabasePort
@@ -45,6 +42,7 @@ func NewPostgresClient(config config.Config, logger logger.LoggerType) (*Postgre
 		authToken, err := rdsutils.BuildAuthToken(dbEndpoint, databaseRegion, databaseUser, creds)
 
 		if err != nil {
+			logger.PostLogMessage(err.Error())
 			return nil, err
 		}
 
@@ -56,28 +54,35 @@ func NewPostgresClient(config config.Config, logger logger.LoggerType) (*Postgre
 	db, err := sql.Open("postgres", dsn)
 
 	if err != nil {
+		logger.PostLogMessage(err.Error())
 		return nil, err
 	}
 
 	err = db.Ping()
 	if err != nil {
+		logger.PostLogMessage(err.Error())
 		return nil, err
 	}
 
-	// Create users table
-	migrate(db, databaseContentTable)
+	// Create content table
+	err = migrate(db, databaseContentTable)
+	if err != nil {
+		logger.PostLogMessage(err.Error())
+		return nil, err
+
+	}
 
 	return &PostgresDBClient{db: db, tablename: databaseContentTable, loggerService: logger}, nil
 }
 
-func (psql *PostgresDBClient) CreateUser(content *domain.Content) (*domain.Content, error) {
+func (psql *PostgresDBClient) CreateContent(content *domain.Content) (*domain.Content, error) {
 	queryString := fmt.Sprintf(
 		`INSERT INTO %s 
-			(content_id,creator_id,title,body,images,vidoes,publication_date) 
+			(content_id,creator_id,title,body,publication_date) 
 			VALUES 
-			($1, $2, $3, $4, $5, $6, $7)`,
+			($1, $2, $3, $4, $5)`,
 		psql.tablename)
-	_, err := psql.db.Exec(queryString, content.ContentId, content.CreatorId, content.Title, content.Body, content.Images, content.Videos, content.PublicationDate)
+	_, err := psql.db.Exec(queryString, content.ContentId, content.CreatorId, content.Title, content.Body, content.PublicationDate)
 
 	if err != nil {
 		psql.loggerService.PostLogMessage(err.Error())
@@ -89,8 +94,8 @@ func (psql *PostgresDBClient) CreateUser(content *domain.Content) (*domain.Conte
 
 func (psql *PostgresDBClient) ReadContent(id string) (*domain.Content, error) {
 	var content domain.Content
-	queryString := fmt.Sprintf(`SELECT content_id,creator_id,title,body,images,vidoes,publication_date FROM %s WHERE content_id=$1`, psql.tablename)
-	err := psql.db.QueryRow(queryString, id).Scan(&content.ContentId, &content.CreatorId, &content.Title, &content.Body, &content.Images, &content.Videos, &content.PublicationDate)
+	queryString := fmt.Sprintf(`SELECT content_id,creator_id,title,body,publication_date FROM %s WHERE content_id=$1`, psql.tablename)
+	err := psql.db.QueryRow(queryString, id).Scan(&content.ContentId, &content.CreatorId, &content.Title, &content.Body, &content.PublicationDate)
 	if err != nil {
 		psql.loggerService.PostLogMessage(err.Error())
 		return nil, err
@@ -110,7 +115,7 @@ func (psql *PostgresDBClient) ReadContents() ([]domain.Content, error) {
 	for rows.Next() {
 		var content domain.Content
 
-		if err := rows.Scan(&content.ContentId, &content.CreatorId, &content.Title, &content.Body, &content.Images, &content.Videos, &content.PublicationDate); err != nil {
+		if err := rows.Scan(&content.ContentId, &content.CreatorId, &content.Title, &content.Body, &content.PublicationDate); err != nil {
 			psql.loggerService.PostLogMessage(err.Error())
 			return nil, err
 		}
@@ -124,13 +129,10 @@ func (psql *PostgresDBClient) ReadContents() ([]domain.Content, error) {
 func (psql *PostgresDBClient) UpdateContent(content *domain.Content) (*domain.Content, error) {
 	queryString := fmt.Sprintf(`UPDATE %s SET 
 		title = $2,
-		body = $3,
-		images = $4,
-		videos = $5,
-		publication_date = $6
+		body = $3
 	`, psql.tablename)
 
-	_, err := psql.db.Exec(queryString, content.Title, content.Body, content.Images, content.Videos, content.PublicationDate)
+	_, err := psql.db.Exec(queryString, content.Title, content.Body)
 	if err != nil {
 		psql.loggerService.PostLogMessage(err.Error())
 		return nil, err
@@ -140,7 +142,7 @@ func (psql *PostgresDBClient) UpdateContent(content *domain.Content) (*domain.Co
 
 func (psql *PostgresDBClient) DeleteContent(id string) (string, error) {
 
-	queryString := fmt.Sprintf(`DELETE FROM %s WHERE id = $1`, psql.tablename)
+	queryString := fmt.Sprintf(`DELETE FROM %s WHERE content_id = $1`, psql.tablename)
 	_, err := psql.db.Exec(queryString, id)
 	if err != nil {
 		psql.loggerService.PostLogMessage(err.Error())
@@ -148,56 +150,22 @@ func (psql *PostgresDBClient) DeleteContent(id string) (string, error) {
 	}
 	return "Entity deleted successfully", nil
 }
-func (psql *PostgresDBClient) readUserContent(userId string) ([]domain.Content, error) {
-	// URL of the API or website you want to request data from
-	url := "http://127.0.0.1:5000"
 
-	// Send GET request
-	response, err := http.Get(url)
-	if err != nil {
-		fmt.Println(url)
-		psql.loggerService.PostLogMessage(err.Error())
-		return nil, err
-	}
-	defer response.Body.Close()
-
-	// Read the response body
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-
-		psql.loggerService.PostLogMessage(err.Error())
-		return nil, err
-	}
-
-	// Convert the response body to a string and print it
-	var content []domain.Content
-	err = json.Unmarshal(body, &content)
-	if err != nil {
-		psql.loggerService.PostLogMessage(err.Error())
-		return nil, err
-	}
-	return content, nil
-}
-
-func migrate(db *sql.DB, userTable string) error {
-	// Creates new usertable if does not exists
+func migrate(db *sql.DB, contentTable string) error {
+	// Creates new contentTable if does not exists
 	queryString := fmt.Sprintf(`
 		CREATE TABLE IF NOT EXISTS %s (
-			id VARCHAR(255) PRIMARY KEY UNIQUE,
-			firstname VARCHAR(255) NOT NULL,
-			lastname VARCHAR(255) NOT NULL,
-			email VARCHAR(255) UNIQUE NOT NULL,
-			password VARCHAR(255) UNIQUE NOT NULL,
-			handle VARCHAR(255),
-			about TEXT,
-			profile_image varchar(255),
-			Following int,
-			Followers int
+			content_id VARCHAR(255) PRIMARY KEY UNIQUE,
+			creator_id VARCHAR(255) NOT NULL,
+			title VARCHAR(255) NOT NULL,
+			body VARCHAR(255) NOT NULL,
+			publication_date DATE NOT NULL
 	)
-	`, userTable)
+	`, contentTable)
 
 	_, err := db.Exec(queryString)
 	if err != nil {
+
 		return err
 	}
 

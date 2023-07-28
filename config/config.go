@@ -9,7 +9,7 @@ import (
 type Config struct {
 	Env                string
 	Port               string
-	UserTable          string
+	ContentTable       string
 	AWS_ACCESS_KEY     string
 	AWS_SECRET_KEY     string
 	AWS_DEFAULT_REGION string
@@ -37,7 +37,7 @@ func NewConfig(Env string) (*Config, error) {
 		LoggerURL          = os.Getenv("LoggerURL")
 		SECRET_KEY         = os.Getenv("SECRET_KEY")
 		Port               = "8080"
-		UserTable          = "UsersTable"
+		ContentTable       = "ContentTable"
 		DatabaseName       = "Notlify"
 		DatabaseUser       = os.Getenv("DatabaseUser")
 		DatabasePort       = "5432"
@@ -66,7 +66,7 @@ func NewConfig(Env string) (*Config, error) {
 	config := Config{
 		Env:                Env,
 		Port:               Port,
-		UserTable:          UserTable,
+		ContentTable:       ContentTable,
 		AWS_ACCESS_KEY:     AWS_ACCESS_KEY,
 		AWS_SECRET_KEY:     AWS_SECRET_KEY,
 		SECRET_KEY:         SECRET_KEY,

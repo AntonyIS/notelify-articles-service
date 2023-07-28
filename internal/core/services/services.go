@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"time"
 
 	"github.com/AntonyIS/notlify-content-svc/internal/core/domain"
 	"github.com/AntonyIS/notlify-content-svc/internal/core/ports"
@@ -22,7 +23,7 @@ func NewContentManagementService(repo ports.ContentRepository) *ContentManagemen
 func (svc *ContentManagementService) CreateContent(content *domain.Content) (*domain.Content, error) {
 	// Assign new content with a unique id
 	content.ContentId = uuid.New().String()
-	// hash content password
+	content.PublicationDate = time.Now()
 	return svc.repo.CreateContent(content)
 }
 
@@ -30,10 +31,22 @@ func (svc *ContentManagementService) ReadContent(id string) (*domain.Content, er
 	return svc.repo.ReadContent(id)
 }
 
-func (svc *ContentManagementService) ReadContentWithEmail(email string) (*domain.Content, error) {
-	return svc.repo.ReadContent(email)
-}
+func (svc *ContentManagementService) ReadCreatorContents(creator_id string) ([]domain.Content, error) {
+	contents, err := svc.repo.ReadContents()
+	if err != nil {
+		return nil, err
+	}
 
+	results := []domain.Content{}
+	for _, content := range contents {
+		if content.CreatorId == creator_id {
+			results = append(results, content)
+		}
+	}
+
+	return results, nil
+
+}
 func (svc *ContentManagementService) ReadContents() ([]domain.Content, error) {
 	return svc.repo.ReadContents()
 }
@@ -42,7 +55,7 @@ func (svc *ContentManagementService) UpdateContent(content *domain.Content) (*do
 	return svc.repo.UpdateContent(content)
 }
 
-func (svc *ContentManagementService) DeleteUser(id string) (string, error) {
+func (svc *ContentManagementService) DeleteContent(id string) (string, error) {
 	// Check if user exists
 	_, err := svc.ReadContent(id)
 	if err != nil {
