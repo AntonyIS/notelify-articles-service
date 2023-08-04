@@ -40,7 +40,7 @@ func NewConfig(Env string) (*Config, error) {
 		LoggerURL             = os.Getenv("LoggerURL")
 		DatabaseUser          = os.Getenv("DatabaseUser")
 		DatabasePassword      = os.Getenv("DatabasePassword")
-		Port                  = "8080"
+		Port                  = "8081"
 		ContentTable          = "ContentTable"
 		DatabaseName          = "postgres"
 		DatabasePort          = 5432

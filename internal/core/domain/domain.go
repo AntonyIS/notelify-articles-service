@@ -24,6 +24,5 @@ type Content struct {
 	Title           string    `json:"title"`
 	Body            string    `json:"body"`
 	PublicationDate time.Time `json:"publication_date"`
-	// Images          map[string]string `json:"images"`
-	// Videos          map[string]string `json:"videos"`
+	
 }
