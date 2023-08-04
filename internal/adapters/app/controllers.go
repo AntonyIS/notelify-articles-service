@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/AntonyIS/notlify-content-svc/internal/core/domain"
@@ -41,7 +40,6 @@ func (h handler) CreateContent(ctx *gin.Context) {
 		return
 	}
 
-	fmt.Println(res)
 	content, err := h.svc.CreateContent(res)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{

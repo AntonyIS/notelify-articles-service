@@ -21,7 +21,6 @@ func NewContentManagementService(repo ports.ContentRepository) *ContentManagemen
 }
 
 func (svc *ContentManagementService) CreateContent(content *domain.Content) (*domain.Content, error) {
-	// Assign new content with a unique id
 	content.ContentId = uuid.New().String()
 	content.PublicationDate = time.Now()
 	return svc.repo.CreateContent(content)
@@ -56,11 +55,9 @@ func (svc *ContentManagementService) UpdateContent(content *domain.Content) (*do
 }
 
 func (svc *ContentManagementService) DeleteContent(id string) (string, error) {
-	// Check if user exists
 	_, err := svc.ReadContent(id)
 	if err != nil {
 		return " ", errors.New("Error, item not found!")
 	}
-
 	return svc.repo.DeleteContent(id)
 }

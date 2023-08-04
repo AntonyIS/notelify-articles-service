@@ -2,13 +2,15 @@ package postgres
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 
-	"github.com/AntonyIS/notlify-content-svc/config"
+	appConfig "github.com/AntonyIS/notlify-content-svc/config"
 	"github.com/AntonyIS/notlify-content-svc/internal/adapters/logger"
 	"github.com/AntonyIS/notlify-content-svc/internal/core/domain"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/service/rds/rdsutils"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/rds"
 	_ "github.com/lib/pq"
 )
 
@@ -18,37 +20,46 @@ type PostgresDBClient struct {
 	loggerService logger.LoggerType
 }
 
-func NewPostgresClient(config config.Config, logger logger.LoggerType) (*PostgresDBClient, error) {
-	databaseName := config.DatabaseName
-	databaseContentTable := config.ContentTable
-	databaseUser := config.DatabaseUser
-	databasePassword := config.DatabasePassword
-	databasePort := config.DatabasePort
-	databaseHost := config.DatabaseHost
-	databaseRegion := config.AWS_DEFAULT_REGION
+func NewPostgresClient(appConfig appConfig.Config, logger logger.LoggerType) (*PostgresDBClient, error) {
+	dbname := appConfig.DatabaseName
+	tablename := appConfig.ContentTable
+	user := appConfig.DatabaseUser
+	password := appConfig.DatabasePassword
+	port := appConfig.DatabasePort
+	host := appConfig.DatabaseHost
+	region := appConfig.AWS_DEFAULT_REGION
+	rdsInstanceIdentifier := appConfig.RDSInstanceIdentifier
 	var dsn string
 
-	if config.Env == "dev" {
-		dsn = fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
-			databaseHost,
-			databasePort,
-			databaseUser,
-			databaseName,
-			databasePassword,
-		)
+	if appConfig.Env == "dev" {
+		dsn = fmt.Sprintf("host=%s port=%d user=%s dbname=%s password=%s sslmode=disable", host, port, user, dbname, password)
 	} else {
-		dbEndpoint := fmt.Sprintf("%s:%s", databaseHost, databasePort)
-		creds := credentials.NewEnvCredentials()
-		authToken, err := rdsutils.BuildAuthToken(dbEndpoint, databaseRegion, databaseUser, creds)
 
-		if err != nil {
-			logger.PostLogMessage(err.Error())
-			return nil, err
+		// Create a new AWS session
+		awsSession := session.Must(session.NewSession(&aws.Config{
+			Region: aws.String(region),
+		}))
+
+		// Create an RDS client
+		rdsClient := rds.New(awsSession)
+
+		// Describe the DB instance to get its endpoint
+		describeInput := &rds.DescribeDBInstancesInput{
+			DBInstanceIdentifier: &rdsInstanceIdentifier,
 		}
 
-		dsn = fmt.Sprintf("%s:%s@tcp(%s)/%s?tls=true&allowCleartextPasswords=true",
-			databaseUser, authToken, dbEndpoint, databaseName,
-		)
+		describeOutput, err := rdsClient.DescribeDBInstances(describeInput)
+		if err != nil {
+			logger.PostLogMessage(fmt.Sprintf("Failed to describe DB instance: %s", err.Error()))
+		}
+
+		if len(describeOutput.DBInstances) == 0 {
+			logger.PostLogMessage("DB instance not found")
+		}
+
+		endpoint := describeOutput.DBInstances[0].Endpoint.Address
+
+		dsn = fmt.Sprintf("host=%s port=%d dbname=%s user=%s password=%s sslmode=require", *endpoint, port, dbname, user, password)
 	}
 
 	db, err := sql.Open("postgres", dsn)
@@ -59,20 +70,20 @@ func NewPostgresClient(config config.Config, logger logger.LoggerType) (*Postgre
 	}
 
 	err = db.Ping()
+
 	if err != nil {
 		logger.PostLogMessage(err.Error())
 		return nil, err
 	}
 
-	// Create content table
-	err = migrate(db, databaseContentTable)
+	err = migrateDB(db, tablename)
 	if err != nil {
 		logger.PostLogMessage(err.Error())
 		return nil, err
 
 	}
 
-	return &PostgresDBClient{db: db, tablename: databaseContentTable, loggerService: logger}, nil
+	return &PostgresDBClient{db: db, tablename: tablename, loggerService: logger}, nil
 }
 
 func (psql *PostgresDBClient) CreateContent(content *domain.Content) (*domain.Content, error) {
@@ -97,8 +108,8 @@ func (psql *PostgresDBClient) ReadContent(id string) (*domain.Content, error) {
 	queryString := fmt.Sprintf(`SELECT content_id,creator_id,title,body,publication_date FROM %s WHERE content_id=$1`, psql.tablename)
 	err := psql.db.QueryRow(queryString, id).Scan(&content.ContentId, &content.CreatorId, &content.Title, &content.Body, &content.PublicationDate)
 	if err != nil {
-		psql.loggerService.PostLogMessage(err.Error())
-		return nil, err
+		psql.loggerService.PostLogMessage(fmt.Sprintf("content with id [%s] not found: %s", id, err.Error()))
+		return nil, errors.New(fmt.Sprintf("content with id [%s] not found", id))
 	}
 
 	return &content, nil
@@ -151,8 +162,7 @@ func (psql *PostgresDBClient) DeleteContent(id string) (string, error) {
 	return "Entity deleted successfully", nil
 }
 
-func migrate(db *sql.DB, contentTable string) error {
-	// Creates new contentTable if does not exists
+func migrateDB(db *sql.DB, contentTable string) error {
 	queryString := fmt.Sprintf(`
 		CREATE TABLE IF NOT EXISTS %s (
 			content_id VARCHAR(255) PRIMARY KEY UNIQUE,
