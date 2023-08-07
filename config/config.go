@@ -65,7 +65,7 @@ func NewConfig(Env string) (*Config, error) {
 		Testing = false
 		Debugging = false
 		DatabaseHost = os.Getenv("DatabaseHost")
-		DatabaseName = "init_notlify_db"
+		DatabaseName = "notlify_db_init"
 	}
 
 	config := Config{

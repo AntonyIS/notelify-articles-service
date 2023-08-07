@@ -34,13 +34,9 @@ func NewPostgresClient(appConfig appConfig.Config, logger logger.LoggerType) (*P
 	if appConfig.Env == "dev" {
 		dsn = fmt.Sprintf("host=%s port=%d user=%s dbname=%s password=%s sslmode=disable", host, port, user, dbname, password)
 	} else {
-
-		// Create a new AWS session
 		awsSession := session.Must(session.NewSession(&aws.Config{
 			Region: aws.String(region),
 		}))
-
-		// Create an RDS client
 		rdsClient := rds.New(awsSession)
 
 		// Describe the DB instance to get its endpoint
@@ -56,10 +52,10 @@ func NewPostgresClient(appConfig appConfig.Config, logger logger.LoggerType) (*P
 		if len(describeOutput.DBInstances) == 0 {
 			logger.PostLogMessage("DB instance not found")
 		}
+		// fmt.Println(describeOutput)
+		// endpoint := describeOutput.DBInstances[0].Endpoint.Address
 
-		endpoint := describeOutput.DBInstances[0].Endpoint.Address
-
-		dsn = fmt.Sprintf("host=%s port=%d dbname=%s user=%s password=%s sslmode=require", *endpoint, port, dbname, user, password)
+		dsn = fmt.Sprintf("host=%s port=%d dbname=%s user=%s password=%s sslmode=require", host, port, dbname, user, password)
 	}
 
 	db, err := sql.Open("postgres", dsn)
