@@ -38,7 +38,7 @@ func (svc *ContentManagementService) ReadCreatorContents(creator_id string) ([]d
 
 	results := []domain.Content{}
 	for _, content := range contents {
-		if content.CreatorId == creator_id {
+		if content.User.Id == creator_id {
 			results = append(results, content)
 		}
 	}
@@ -60,4 +60,8 @@ func (svc *ContentManagementService) DeleteContent(id string) (string, error) {
 		return " ", errors.New("Error, item not found!")
 	}
 	return svc.repo.DeleteContent(id)
+}
+
+func (svc *ContentManagementService) DeleteAllContent() (string, error) {
+	return svc.repo.DeleteAllContent()
 }

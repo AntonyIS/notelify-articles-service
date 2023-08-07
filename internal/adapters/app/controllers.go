@@ -15,6 +15,7 @@ type GinHandler interface {
 	ReadContents(ctx *gin.Context)
 	UpdateContent(ctx *gin.Context)
 	DeleteContent(ctx *gin.Context)
+	DeleteAllContent(ctx *gin.Context)
 }
 
 type handler struct {
@@ -119,6 +120,20 @@ func (h handler) UpdateContent(ctx *gin.Context) {
 func (h handler) DeleteContent(ctx *gin.Context) {
 	id := ctx.Param("id")
 	message, err := h.svc.DeleteContent(id)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": message,
+	})
+}
+
+func (h handler) DeleteAllContent(ctx *gin.Context) {
+	message, err := h.svc.DeleteAllContent()
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),

@@ -9,6 +9,7 @@ type ContentService interface {
 	UpdateContent(Content *domain.Content) (*domain.Content, error)
 	DeleteContent(id string) (string, error)
 	ReadCreatorContents(creator_id string) ([]domain.Content, error)
+	DeleteAllContent() (string, error)
 }
 
 type ContentRepository interface {
@@ -17,4 +18,5 @@ type ContentRepository interface {
 	ReadContents() ([]domain.Content, error)
 	UpdateContent(Content *domain.Content) (*domain.Content, error)
 	DeleteContent(id string) (string, error)
+	DeleteAllContent() (string, error)
 }

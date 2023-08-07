@@ -2,8 +2,11 @@ package postgres
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 
 	appConfig "github.com/AntonyIS/notlify-content-svc/config"
 	"github.com/AntonyIS/notlify-content-svc/internal/adapters/logger"
@@ -52,8 +55,6 @@ func NewPostgresClient(appConfig appConfig.Config, logger logger.LoggerType) (*P
 		if len(describeOutput.DBInstances) == 0 {
 			logger.PostLogMessage("DB instance not found")
 		}
-		// fmt.Println(describeOutput)
-		// endpoint := describeOutput.DBInstances[0].Endpoint.Address
 
 		dsn = fmt.Sprintf("host=%s port=%d dbname=%s user=%s password=%s sslmode=require", host, port, dbname, user, password)
 	}
@@ -83,13 +84,21 @@ func NewPostgresClient(appConfig appConfig.Config, logger logger.LoggerType) (*P
 }
 
 func (psql *PostgresDBClient) CreateContent(content *domain.Content) (*domain.Content, error) {
+	usertSvcURL := fmt.Sprintf("http://127.0.0.1:8080/v1/users/%s", content.User.Id)
+	user, err := getUser(usertSvcURL)
+	if err != nil {
+		psql.loggerService.PostLogMessage("unable to read user content")
+	}
+	content.User = *user
+
 	queryString := fmt.Sprintf(
 		`INSERT INTO %s 
-			(content_id,creator_id,title,body,publication_date) 
+			(content_id,creator_id,title,body,user,publication_date) 
 			VALUES 
-			($1, $2, $3, $4, $5)`,
-		psql.tablename)
-	_, err := psql.db.Exec(queryString, content.ContentId, content.CreatorId, content.Title, content.Body, content.PublicationDate)
+			($1, $2, $3, $4, $5, $6)`,
+		psql.tablename,
+	)
+	_, err = psql.db.Exec(queryString, content.ContentId, content.User.Id, content.Title, content.Body, content.User, content.PublicationDate)
 
 	if err != nil {
 		psql.loggerService.PostLogMessage(err.Error())
@@ -102,7 +111,7 @@ func (psql *PostgresDBClient) CreateContent(content *domain.Content) (*domain.Co
 func (psql *PostgresDBClient) ReadContent(id string) (*domain.Content, error) {
 	var content domain.Content
 	queryString := fmt.Sprintf(`SELECT content_id,creator_id,title,body,publication_date FROM %s WHERE content_id=$1`, psql.tablename)
-	err := psql.db.QueryRow(queryString, id).Scan(&content.ContentId, &content.CreatorId, &content.Title, &content.Body, &content.PublicationDate)
+	err := psql.db.QueryRow(queryString, id).Scan(&content.ContentId, &content.User.Id, &content.Title, &content.Body, &content.PublicationDate)
 	if err != nil {
 		psql.loggerService.PostLogMessage(fmt.Sprintf("content with id [%s] not found: %s", id, err.Error()))
 		return nil, errors.New(fmt.Sprintf("content with id [%s] not found", id))
@@ -122,7 +131,7 @@ func (psql *PostgresDBClient) ReadContents() ([]domain.Content, error) {
 	for rows.Next() {
 		var content domain.Content
 
-		if err := rows.Scan(&content.ContentId, &content.CreatorId, &content.Title, &content.Body, &content.PublicationDate); err != nil {
+		if err := rows.Scan(&content.ContentId, &content.User.Id, &content.Title, &content.Body, &content.PublicationDate); err != nil {
 			psql.loggerService.PostLogMessage(err.Error())
 			return nil, err
 		}
@@ -158,6 +167,15 @@ func (psql *PostgresDBClient) DeleteContent(id string) (string, error) {
 	return "Entity deleted successfully", nil
 }
 
+func (psql *PostgresDBClient) DeleteAllContent() (string, error) {
+	queryString := fmt.Sprintf(`DELETE FROM %s`, psql.tablename)
+	_, err := psql.db.Exec(queryString)
+	if err != nil {
+		return "", err
+	}
+	return "All items deletes successfully", nil
+}
+
 func migrateDB(db *sql.DB, contentTable string) error {
 	queryString := fmt.Sprintf(`
 		CREATE TABLE IF NOT EXISTS %s (
@@ -177,4 +195,31 @@ func migrateDB(db *sql.DB, contentTable string) error {
 
 	return nil
 
+}
+
+func getUser(url string) (*domain.ContentUser, error) {
+	// Makes a get HTTP request to the content service
+
+	response, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+
+	body, err := ioutil.ReadAll(response.Body)
+
+	if err != nil {
+		return nil, err
+	}
+
+	res := string(body)
+
+	var user domain.ContentUser
+
+	err = json.Unmarshal([]byte(res), &user)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
 }

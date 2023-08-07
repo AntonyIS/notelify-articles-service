@@ -15,13 +15,6 @@ func InitGinRoutes(svc ports.ContentService, logger logger.LoggerType, conf conf
 	config := cors.DefaultConfig()
 	config.AllowAllOrigins = true
 	router.Use(cors.New(config))
-	// router.Use(cors.New(cors.Config{
-	// 	AllowOrigins:     []string{"http://localhost:3000"},
-	// 	AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
-	// 	AllowHeaders:     []string{"Origin", "Content-Type"},
-	// 	ExposeHeaders:    []string{"Content-Length"},
-	// 	AllowCredentials: true,
-	// }))
 
 	handler := NewGinHandler(svc, conf.SECRET_KEY)
 
@@ -31,8 +24,10 @@ func InitGinRoutes(svc ports.ContentService, logger logger.LoggerType, conf conf
 		contentsRoutes.GET("/", handler.ReadContents)
 		contentsRoutes.GET("/:id", handler.ReadContent)
 		contentsRoutes.PUT("/:id", handler.UpdateContent)
+
 		contentsRoutes.DELETE("/:id", handler.DeleteContent)
 		contentsRoutes.POST("/", handler.CreateContent)
+		contentsRoutes.DELETE("/delete/all", handler.DeleteAllContent)
 		contentsRoutes.GET("/author/:creator_id", handler.ReadCreatorContents)
 	}
 	logger.PostLogMessage(fmt.Sprintf("Server running on port :%s", conf.Port))
