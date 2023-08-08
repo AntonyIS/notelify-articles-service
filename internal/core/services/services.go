@@ -38,7 +38,7 @@ func (svc *ContentManagementService) ReadCreatorContents(creator_id string) ([]d
 
 	results := []domain.Content{}
 	for _, content := range contents {
-		if content.User.Id == creator_id {
+		if content.CreatorId == creator_id {
 			results = append(results, content)
 		}
 	}

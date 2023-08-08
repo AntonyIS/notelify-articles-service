@@ -40,7 +40,6 @@ func (h handler) CreateContent(ctx *gin.Context) {
 		})
 		return
 	}
-
 	content, err := h.svc.CreateContent(res)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
