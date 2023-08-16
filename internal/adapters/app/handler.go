@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func InitGinRoutes(svc ports.ContentService, logger logger.LoggerType, conf appConfig.Config) {
+func InitGinRoutes(svc ports.ArticleService, logger logger.LoggerType, conf appConfig.Config) {
 	gin.SetMode(gin.DebugMode)
 
 	router := gin.Default()
@@ -25,17 +25,18 @@ func InitGinRoutes(svc ports.ContentService, logger logger.LoggerType, conf appC
 
 	handler := NewGinHandler(svc, conf.SECRET_KEY)
 
-	contentsRoutes := router.Group("/v1/contents")
-
+	articleRoutes := router.Group("/v1/articles")
 	{
-		contentsRoutes.GET("/", handler.ReadContents)
-		contentsRoutes.GET("/:id", handler.ReadContent)
-		contentsRoutes.PUT("/:id", handler.UpdateContent)
-		contentsRoutes.DELETE("/:id", handler.DeleteContent)
-		contentsRoutes.POST("/", handler.CreateContent)
-		contentsRoutes.DELETE("/delete/all", handler.DeleteAllContent)
-		contentsRoutes.GET("/users/:creator_id", handler.ReadCreatorContents)
+		articleRoutes.POST("/", handler.CreateArticle)
+		articleRoutes.GET("/:article_id", handler.GetArticleByID)
+		articleRoutes.GET("/", handler.GetArticles)
+		articleRoutes.GET("/author/:author_id", handler.GetArticlesByAuthor)
+		articleRoutes.GET("/tag/:tag_name", handler.GetArticlesByTag)
+		articleRoutes.PUT("/", handler.UpdateArticle)
+		articleRoutes.DELETE("/:id", handler.DeleteArticle)
+		articleRoutes.DELETE("/", handler.DeleteArticleAll)
 	}
+
 	logger.PostLogMessage(fmt.Sprintf("Server running on port :%s", conf.Port))
 	router.Run(fmt.Sprintf(":%s", conf.Port))
 }

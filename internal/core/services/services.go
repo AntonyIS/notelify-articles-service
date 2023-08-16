@@ -1,7 +1,6 @@
 package services
 
 import (
-	"errors"
 	"time"
 
 	"github.com/AntonyIS/notlify-content-svc/internal/core/domain"
@@ -9,59 +8,47 @@ import (
 	"github.com/google/uuid"
 )
 
-type ContentManagementService struct {
-	repo ports.ContentRepository
+type articleManagementService struct {
+	repo ports.ArticleRepository
 }
 
-func NewContentManagementService(repo ports.ContentRepository) *ContentManagementService {
-	svc := ContentManagementService{
+func NewArticleManagementService(repo ports.ArticleRepository) *articleManagementService {
+	svc := articleManagementService{
 		repo: repo,
 	}
 	return &svc
 }
 
-func (svc *ContentManagementService) CreateContent(content *domain.Content) (*domain.Content, error) {
-	content.ContentId = uuid.New().String()
-	content.PublicationDate = time.Now()
-	return svc.repo.CreateContent(content)
+func (svc *articleManagementService) CreateArticle(article *domain.Article) (*domain.Article, error) {
+	article.ArticleID = uuid.New().String()
+	article.PublishDate = time.Now()
+	return svc.repo.CreateArticle(article)
 }
 
-func (svc *ContentManagementService) ReadContent(id string) (*domain.Content, error) {
-	return svc.repo.ReadContent(id)
+func (svc *articleManagementService) GetArticleByID(article_id string) (*domain.Article, error) {
+	return svc.repo.GetArticleByID(article_id)
 }
 
-func (svc *ContentManagementService) ReadCreatorContents(creator_id string) ([]domain.Content, error) {
-	contents, err := svc.repo.ReadContents()
-	if err != nil {
-		return nil, err
-	}
-
-	results := []domain.Content{}
-	for _, content := range contents {
-		if content.CreatorId == creator_id {
-			results = append(results, content)
-		}
-	}
-
-	return results, nil
-
-}
-func (svc *ContentManagementService) ReadContents() ([]domain.Content, error) {
-	return svc.repo.ReadContents()
+func (svc *articleManagementService) GetArticlesByAuthor(author_id string) (*[]domain.Article, error) {
+	return svc.repo.GetArticlesByAuthor(author_id)
 }
 
-func (svc *ContentManagementService) UpdateContent(content *domain.Content) (*domain.Content, error) {
-	return svc.repo.UpdateContent(content)
+func (svc *articleManagementService) GetArticlesByTag(tag string) (*[]domain.Article, error) {
+	return svc.repo.GetArticlesByTag(tag)
 }
 
-func (svc *ContentManagementService) DeleteContent(id string) (string, error) {
-	_, err := svc.ReadContent(id)
-	if err != nil {
-		return " ", errors.New("Error, item not found!")
-	}
-	return svc.repo.DeleteContent(id)
+func (svc *articleManagementService) GetArticles() (*[]domain.Article, error) {
+	return svc.repo.GetArticles()
 }
 
-func (svc *ContentManagementService) DeleteAllContent() (string, error) {
-	return svc.repo.DeleteAllContent()
+func (svc *articleManagementService) UpdateArticle(article *domain.Article) (*domain.Article, error) {
+	return svc.repo.UpdateArticle(article)
+}
+
+func (svc *articleManagementService) DeleteArticle(article_id string) error {
+	return svc.repo.DeleteArticle(article_id)
+}
+
+func (svc *articleManagementService) DeleteArticleAll() error {
+	return svc.repo.DeleteArticleAll()
 }

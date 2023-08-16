@@ -33,7 +33,7 @@ func main() {
 		panic(err)
 	} else {
 
-		contentSVC := services.NewContentManagementService(postgresDBRepo)
+		contentSVC := services.NewArticleManagementService(postgresDBRepo)
 		app.InitGinRoutes(contentSVC, logger, *conf)
 	}
 	logger.PostLogMessage(err.Error())

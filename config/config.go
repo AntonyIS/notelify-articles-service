@@ -41,7 +41,7 @@ func NewConfig(Env string) (*Config, error) {
 		DatabaseUser          = os.Getenv("DatabaseUser")
 		DatabasePassword      = os.Getenv("DatabasePassword")
 		Port                  = "8081"
-		ContentTable          = "ContentTable"
+		ContentTable          = "Articles"
 		DatabaseName          = "postgres"
 		DatabasePort          = 5432
 		DatabaseHost          = ""
