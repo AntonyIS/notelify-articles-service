@@ -4,51 +4,56 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/AntonyIS/notlify-content-svc/config"
+	appConfig "github.com/AntonyIS/notlify-content-svc/config"
 	"github.com/AntonyIS/notlify-content-svc/internal/adapters/logger"
 	"github.com/AntonyIS/notlify-content-svc/internal/core/domain"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/service/rds/rdsutils"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/rds"
+	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 )
 
-type PostgresDBClient struct {
+type postgresDBClient struct {
 	db            *sql.DB
 	tablename     string
 	loggerService logger.LoggerType
 }
 
-func NewPostgresClient(config config.Config, logger logger.LoggerType) (*PostgresDBClient, error) {
-	databaseName := config.DatabaseName
-	databaseContentTable := config.ContentTable
-	databaseUser := config.DatabaseUser
-	databasePassword := config.DatabasePassword
-	databasePort := config.DatabasePort
-	databaseHost := config.DatabaseHost
-	databaseRegion := config.AWS_DEFAULT_REGION
+func NewPostgresClient(appConfig appConfig.Config, logger logger.LoggerType) (*postgresDBClient, error) {
+	dbname := appConfig.DatabaseName
+	tablename := appConfig.ContentTable
+	user := appConfig.DatabaseUser
+	password := appConfig.DatabasePassword
+	port := appConfig.DatabasePort
+	host := appConfig.DatabaseHost
+	region := appConfig.AWS_DEFAULT_REGION
+	rdsInstanceIdentifier := appConfig.RDSInstanceIdentifier
 	var dsn string
 
-	if config.Env == "dev" {
-		dsn = fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
-			databaseHost,
-			databasePort,
-			databaseUser,
-			databaseName,
-			databasePassword,
-		)
+	if appConfig.Env == "dev" {
+		dsn = fmt.Sprintf("host=%s port=%d user=%s dbname=%s password=%s sslmode=disable", host, port, user, dbname, password)
 	} else {
-		dbEndpoint := fmt.Sprintf("%s:%s", databaseHost, databasePort)
-		creds := credentials.NewEnvCredentials()
-		authToken, err := rdsutils.BuildAuthToken(dbEndpoint, databaseRegion, databaseUser, creds)
+		awsSession := session.Must(session.NewSession(&aws.Config{
+			Region: aws.String(region),
+		}))
+		rdsClient := rds.New(awsSession)
 
-		if err != nil {
-			logger.PostLogMessage(err.Error())
-			return nil, err
+		// Describe the DB instance to get its endpoint
+		describeInput := &rds.DescribeDBInstancesInput{
+			DBInstanceIdentifier: &rdsInstanceIdentifier,
 		}
 
-		dsn = fmt.Sprintf("%s:%s@tcp(%s)/%s?tls=true&allowCleartextPasswords=true",
-			databaseUser, authToken, dbEndpoint, databaseName,
-		)
+		describeOutput, err := rdsClient.DescribeDBInstances(describeInput)
+		if err != nil {
+			logger.PostLogMessage(fmt.Sprintf("Failed to describe DB instance: %s", err.Error()))
+		}
+
+		if len(describeOutput.DBInstances) == 0 {
+			logger.PostLogMessage("DB instance not found")
+		}
+
+		dsn = fmt.Sprintf("host=%s port=%d dbname=%s user=%s password=%s sslmode=require", host, port, dbname, user, password)
 	}
 
 	db, err := sql.Open("postgres", dsn)
@@ -59,116 +64,200 @@ func NewPostgresClient(config config.Config, logger logger.LoggerType) (*Postgre
 	}
 
 	err = db.Ping()
+
 	if err != nil {
 		logger.PostLogMessage(err.Error())
 		return nil, err
 	}
 
-	// Create content table
-	err = migrate(db, databaseContentTable)
+	queryString := fmt.Sprintf(`
+		CREATE TABLE IF NOT EXISTS %s (
+			article_id VARCHAR(255) PRIMARY KEY UNIQUE,
+			title VARCHAR(255) NOT NULL,
+			subtitle VARCHAR(255),
+			introduction TEXT,
+			body TEXT,
+			tags TEXT[],
+			publish_date TIMESTAMP,
+			author_name VARCHAR(255) NOT NULL,
+			author_bio TEXT,
+			author_profile_pic VARCHAR(255),
+			author_social_links TEXT[],
+			author_followers INT,
+			author_following INT
+	)
+	`, tablename)
+
+	_, err = db.Exec(queryString)
+	if err != nil {
+		return nil, err
+	}
+
 	if err != nil {
 		logger.PostLogMessage(err.Error())
 		return nil, err
 
 	}
 
-	return &PostgresDBClient{db: db, tablename: databaseContentTable, loggerService: logger}, nil
+	return &postgresDBClient{db: db, tablename: tablename, loggerService: logger}, nil
 }
 
-func (psql *PostgresDBClient) CreateContent(content *domain.Content) (*domain.Content, error) {
-	queryString := fmt.Sprintf(
-		`INSERT INTO %s 
-			(content_id,creator_id,title,body,publication_date) 
-			VALUES 
-			($1, $2, $3, $4, $5)`,
-		psql.tablename)
-	_, err := psql.db.Exec(queryString, content.ContentId, content.CreatorId, content.Title, content.Body, content.PublicationDate)
+func (psql *postgresDBClient) CreateArticle(article *domain.Article) (*domain.Article, error) {
+	query := fmt.Sprintf(`
+		INSERT INTO %s (
+			article_id,title,subtitle,introduction,body,tags,publish_date,author_name, author_bio,author_profile_pic,author_social_links,author_followers,author_following)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`, psql.tablename)
+	_, err := psql.db.Exec(
+		query, article.ArticleID, article.Title, article.Subtitle, article.Introduction, article.Body, pq.Array(article.Tags), article.PublishDate, article.Author.Name, article.Author.Bio, article.Author.ProfilePicture,
+		pq.Array(article.Author.SocialLinks), article.Author.Followers, article.Author.Following, psql.tablename)
 
 	if err != nil {
 		psql.loggerService.PostLogMessage(err.Error())
 		return nil, err
 	}
 
-	return content, nil
+	return article, nil
 }
 
-func (psql *PostgresDBClient) ReadContent(id string) (*domain.Content, error) {
-	var content domain.Content
-	queryString := fmt.Sprintf(`SELECT content_id,creator_id,title,body,publication_date FROM %s WHERE content_id=$1`, psql.tablename)
-	err := psql.db.QueryRow(queryString, id).Scan(&content.ContentId, &content.CreatorId, &content.Title, &content.Body, &content.PublicationDate)
+func (psql *postgresDBClient) GetArticleByID(article_id string) (*domain.Article, error) {
+	query := fmt.Sprintf(`
+		SELECT article_id, title, subtitle, introduction, body, tags, publish_date,author_name, author_bio, author_profile_pic, author_social_links,author_followers, author_following
+		FROM %s WHERE article_id = $1`, psql.tablename)
+	var article *domain.Article
+	row := psql.db.QueryRow(query, article_id)
+	err := row.Scan(
+		&article.ArticleID, &article.Title, &article.Subtitle, &article.Introduction,
+		&article.Body, pq.Array(&article.Tags), &article.PublishDate,
+		&article.Author.Name, &article.Author.Bio, &article.Author.ProfilePicture,
+		pq.Array(&article.Author.SocialLinks), &article.Author.Followers,
+		&article.Author.Following,
+	)
 	if err != nil {
-		psql.loggerService.PostLogMessage(err.Error())
-		return nil, err
+		return &domain.Article{}, err
 	}
-
-	return &content, nil
+	return article, nil
 }
 
-func (psql *PostgresDBClient) ReadContents() ([]domain.Content, error) {
-	rows, err := psql.db.Query(fmt.Sprintf("SELECT * FROM %s", psql.tablename))
+func (psql *postgresDBClient) GetArticlesByAuthor(author_id string) (*[]domain.Article, error) {
+	query := fmt.Sprintf(`
+		SELECT article_id, title, subtitle, introduction, body, tags, publish_date,author_name, author_bio, author_profile_pic, author_social_links,author_followers, author_following
+		FROM %s WHERE author_id = $1`, psql.tablename)
+	rows, err := psql.db.Query(query, author_id)
+
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	contents := []domain.Content{}
-	for rows.Next() {
-		var content domain.Content
+	var articles []domain.Article
 
-		if err := rows.Scan(&content.ContentId, &content.CreatorId, &content.Title, &content.Body, &content.PublicationDate); err != nil {
-			psql.loggerService.PostLogMessage(err.Error())
+	for rows.Next() {
+		var article domain.Article
+		err := rows.Scan(
+			&article.ArticleID, &article.Title, &article.Subtitle, &article.Introduction,
+			&article.Body, pq.Array(&article.Tags), &article.PublishDate,
+			&article.Author.Name, &article.Author.Bio, &article.Author.ProfilePicture,
+			pq.Array(&article.Author.SocialLinks), &article.Author.Followers,
+			&article.Author.Following,
+		)
+		if err != nil {
 			return nil, err
 		}
-
-		contents = append(contents, content)
-
+		articles = append(articles, article)
 	}
-	return contents, nil
+
+	return &articles, nil
 }
 
-func (psql *PostgresDBClient) UpdateContent(content *domain.Content) (*domain.Content, error) {
-	queryString := fmt.Sprintf(`UPDATE %s SET 
-		title = $2,
-		body = $3
-	`, psql.tablename)
+func (psql *postgresDBClient) GetArticlesByTag(tag string) (*[]domain.Article, error) {
+	query := fmt.Sprintf(`
+	SELECT id, title, subtitle, introduction, body, tags, publish_date,author_name, author_bio, author_profile_pic, author_social_links,author_followers, author_following
+	FROM %s WHERE $1 = ANY(tags)`, psql.tablename)
+	rows, err := psql.db.Query(query, tag)
 
-	_, err := psql.db.Exec(queryString, content.Title, content.Body)
 	if err != nil {
-		psql.loggerService.PostLogMessage(err.Error())
 		return nil, err
 	}
-	return content, nil
-}
+	defer rows.Close()
 
-func (psql *PostgresDBClient) DeleteContent(id string) (string, error) {
+	var articles []domain.Article
 
-	queryString := fmt.Sprintf(`DELETE FROM %s WHERE content_id = $1`, psql.tablename)
-	_, err := psql.db.Exec(queryString, id)
-	if err != nil {
-		psql.loggerService.PostLogMessage(err.Error())
-		return "", err
+	for rows.Next() {
+		var article domain.Article
+		err := rows.Scan(
+			&article.ArticleID, &article.Title, &article.Subtitle, &article.Introduction,
+			&article.Body, pq.Array(&article.Tags), &article.PublishDate,
+			&article.Author.Name, &article.Author.Bio, &article.Author.ProfilePicture,
+			pq.Array(&article.Author.SocialLinks), &article.Author.Followers,
+			&article.Author.Following,
+		)
+		if err != nil {
+			return nil, err
+		}
+		articles = append(articles, article)
 	}
-	return "Entity deleted successfully", nil
+
+	return &articles, nil
 }
 
-func migrate(db *sql.DB, contentTable string) error {
-	// Creates new contentTable if does not exists
-	queryString := fmt.Sprintf(`
-		CREATE TABLE IF NOT EXISTS %s (
-			content_id VARCHAR(255) PRIMARY KEY UNIQUE,
-			creator_id VARCHAR(255) NOT NULL,
-			title VARCHAR(255) NOT NULL,
-			body VARCHAR(255) NOT NULL,
-			publication_date DATE NOT NULL
-	)
-	`, contentTable)
+func (psql *postgresDBClient) GetArticles() (*[]domain.Article, error) {
+	query := fmt.Sprintf(`
+	SELECT article_id, title, subtitle, introduction, body, tags, publish_date,author_name, author_bio, author_profile_pic, author_social_links,author_followers, author_following
+	FROM %s `, psql.tablename)
 
-	_, err := db.Exec(queryString)
+	rows, err := psql.db.Query(query)
 	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var articles []domain.Article
+	for rows.Next() {
+		var article domain.Article
+		err := rows.Scan(
+			&article.ArticleID, &article.Title, &article.Subtitle, &article.Introduction,
+			&article.Body, pq.Array(&article.Tags), &article.PublishDate,
+			&article.Author.Name, &article.Author.Bio, &article.Author.ProfilePicture,
+			pq.Array(&article.Author.SocialLinks), &article.Author.Followers,
+			&article.Author.Following,
+		)
+		if err != nil {
+			return nil, err
+		}
+		articles = append(articles, article)
+	}
 
+	return &articles, nil
+}
+
+func (psql *postgresDBClient) UpdateArticle(article *domain.Article) (*domain.Article, error) {
+	_, err := psql.db.Exec(fmt.Sprintf(`
+		UPDATE %s
+		SET title = $1, subtitle = $2, introduction = $3, body = $4,tags = $5, publish_date = $6,author_name = $7, author_bio = $8, author_profile_pic = $9,author_social_links = $10, author_followers = $11, author_following = $12
+		WHERE id = $13`, psql.tablename),
+		article.Title, article.Subtitle, article.Introduction, article.Body,
+		pq.Array(article.Tags), article.PublishDate,
+		article.Author.Name, article.Author.Bio, article.Author.ProfilePicture,
+		pq.Array(article.Author.SocialLinks), article.Author.Followers,
+		article.Author.Following, article.ArticleID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return psql.GetArticleByID(article.ArticleID)
+}
+
+func (psql *postgresDBClient) DeleteArticle(article_id string) error {
+	_, err := psql.db.Exec(fmt.Sprintf("DELETE FROM %s WHERE id = $1", psql.tablename), article_id)
+	if err != nil {
 		return err
 	}
-
 	return nil
+}
 
+func (psql *postgresDBClient) DeleteArticleAll() error {
+	_, err := psql.db.Exec(fmt.Sprintf("DELETE FROM %s", psql.tablename))
+	if err != nil {
+		return err
+	}
+	return nil
 }

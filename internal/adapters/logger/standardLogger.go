@@ -37,7 +37,6 @@ func (l LoggerType) PostLogMessage(message string) error {
 		return err
 	}
 
-	// Set any headers you need for the request (e.g., Content-Type)
 	req.Header.Set("Content-Type", "application/json")
 
 	// Perform the request

@@ -33,7 +33,7 @@ COPY --from=builder /app/src .
 COPY --from=builder /app/.env .       
 
 # Expose port 8080 to the outside world
-EXPOSE 8080
+EXPOSE 8081
 
 #Command to run the executable
-CMD ["./src" , "-env=dev"]
+CMD ["./src" , "-env=prod"]

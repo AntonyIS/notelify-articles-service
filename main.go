@@ -23,6 +23,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
 	// Logger service
 	logger := logger.NewLoggerService(conf.LoggerURL)
 	// // Postgres Client
@@ -31,9 +32,8 @@ func main() {
 		logger.PostLogMessage(err.Error())
 		panic(err)
 	} else {
-		// // User service
-		contentSVC := services.NewContentManagementService(postgresDBRepo)
-		// // Initialize HTTP server
+
+		contentSVC := services.NewArticleManagementService(postgresDBRepo)
 		app.InitGinRoutes(contentSVC, logger, *conf)
 	}
 	logger.PostLogMessage(err.Error())
