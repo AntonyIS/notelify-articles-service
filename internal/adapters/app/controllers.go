@@ -51,7 +51,7 @@ func (h handler) CreateArticle(ctx *gin.Context) {
 }
 
 func (h handler) GetArticleByID(ctx *gin.Context) {
-	id := ctx.Param("id")
+	id := ctx.Param("article_id")
 	article, err := h.svc.GetArticleByID(id)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
@@ -75,7 +75,7 @@ func (h handler) GetArticles(ctx *gin.Context) {
 }
 
 func (h handler) GetArticlesByAuthor(ctx *gin.Context) {
-	id := ctx.Param("id")
+	id := ctx.Param("author_id")
 	articles, err := h.svc.GetArticlesByAuthor(id)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{

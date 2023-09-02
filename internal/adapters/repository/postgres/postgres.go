@@ -79,6 +79,7 @@ func NewPostgresClient(appConfig appConfig.Config, logger logger.LoggerType) (*p
 			body TEXT,
 			tags TEXT[],
 			publish_date TIMESTAMP,
+			author_id VARCHAR(255) NOT NULL,
 			author_name VARCHAR(255) NOT NULL,
 			author_bio TEXT,
 			author_profile_pic VARCHAR(255),
@@ -105,11 +106,26 @@ func NewPostgresClient(appConfig appConfig.Config, logger logger.LoggerType) (*p
 func (psql *postgresDBClient) CreateArticle(article *domain.Article) (*domain.Article, error) {
 	query := fmt.Sprintf(`
 		INSERT INTO %s (
-			article_id,title,subtitle,introduction,body,tags,publish_date,author_name, author_bio,author_profile_pic,author_social_links,author_followers,author_following)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`, psql.tablename)
+			article_id,title,subtitle,introduction,body,tags,publish_date,author_id,author_name,author_bio,author_profile_pic,author_social_links,author_followers,author_following)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+		psql.tablename)
 	_, err := psql.db.Exec(
-		query, article.ArticleID, article.Title, article.Subtitle, article.Introduction, article.Body, pq.Array(article.Tags), article.PublishDate, article.Author.Name, article.Author.Bio, article.Author.ProfilePicture,
-		pq.Array(article.Author.SocialLinks), article.Author.Followers, article.Author.Following, psql.tablename)
+		query,
+		article.ArticleID,
+		article.Title,
+		article.Subtitle,
+		article.Introduction,
+		article.Body,
+		pq.Array(article.Tags),
+		article.PublishDate,
+		article.Author.ID,
+		article.Author.Name,
+		article.Author.Bio,
+		article.Author.ProfilePicture,
+		pq.Array(article.Author.SocialLinks),
+		article.Author.Followers,
+		article.Author.Following,
+	)
 
 	if err != nil {
 		psql.loggerService.PostLogMessage(err.Error())
@@ -121,15 +137,23 @@ func (psql *postgresDBClient) CreateArticle(article *domain.Article) (*domain.Ar
 
 func (psql *postgresDBClient) GetArticleByID(article_id string) (*domain.Article, error) {
 	query := fmt.Sprintf(`
-		SELECT article_id, title, subtitle, introduction, body, tags, publish_date,author_name, author_bio, author_profile_pic, author_social_links,author_followers, author_following
+		SELECT article_id, title, subtitle, introduction, body, tags, publish_date,author_id,author_name,author_bio, author_profile_pic, author_social_links,author_followers,author_following
 		FROM %s WHERE article_id = $1`, psql.tablename)
-	var article *domain.Article
+	article := &domain.Article{}
 	row := psql.db.QueryRow(query, article_id)
 	err := row.Scan(
-		&article.ArticleID, &article.Title, &article.Subtitle, &article.Introduction,
-		&article.Body, pq.Array(&article.Tags), &article.PublishDate,
-		&article.Author.Name, &article.Author.Bio, &article.Author.ProfilePicture,
-		pq.Array(&article.Author.SocialLinks), &article.Author.Followers,
+		&article.ArticleID,
+		&article.Title,
+		&article.Subtitle,
+		&article.Introduction,
+		&article.Body, pq.Array(&article.Tags),
+		&article.PublishDate,
+		&article.Author.ID,
+		&article.Author.Name,
+		&article.Author.Bio,
+		&article.Author.ProfilePicture,
+		pq.Array(&article.Author.SocialLinks),
+		&article.Author.Followers,
 		&article.Author.Following,
 	)
 	if err != nil {
@@ -140,7 +164,7 @@ func (psql *postgresDBClient) GetArticleByID(article_id string) (*domain.Article
 
 func (psql *postgresDBClient) GetArticlesByAuthor(author_id string) (*[]domain.Article, error) {
 	query := fmt.Sprintf(`
-		SELECT article_id, title, subtitle, introduction, body, tags, publish_date,author_name, author_bio, author_profile_pic, author_social_links,author_followers, author_following
+		SELECT article_id, title, subtitle, introduction, body, tags, publish_date,author_id,author_name, author_bio, author_profile_pic, author_social_links,author_followers, author_following
 		FROM %s WHERE author_id = $1`, psql.tablename)
 	rows, err := psql.db.Query(query, author_id)
 
@@ -149,13 +173,13 @@ func (psql *postgresDBClient) GetArticlesByAuthor(author_id string) (*[]domain.A
 	}
 	defer rows.Close()
 
-	var articles []domain.Article
+	articles := []domain.Article{}
 
 	for rows.Next() {
 		var article domain.Article
 		err := rows.Scan(
 			&article.ArticleID, &article.Title, &article.Subtitle, &article.Introduction,
-			&article.Body, pq.Array(&article.Tags), &article.PublishDate,
+			&article.Body, pq.Array(&article.Tags), &article.PublishDate, &article.Author.ID,
 			&article.Author.Name, &article.Author.Bio, &article.Author.ProfilePicture,
 			pq.Array(&article.Author.SocialLinks), &article.Author.Followers,
 			&article.Author.Following,
@@ -171,7 +195,7 @@ func (psql *postgresDBClient) GetArticlesByAuthor(author_id string) (*[]domain.A
 
 func (psql *postgresDBClient) GetArticlesByTag(tag string) (*[]domain.Article, error) {
 	query := fmt.Sprintf(`
-	SELECT id, title, subtitle, introduction, body, tags, publish_date,author_name, author_bio, author_profile_pic, author_social_links,author_followers, author_following
+	SELECT id, title, subtitle, introduction, body, tags, publish_date,author_id,author_name, author_bio, author_profile_pic, author_social_links,author_followers, author_following
 	FROM %s WHERE $1 = ANY(tags)`, psql.tablename)
 	rows, err := psql.db.Query(query, tag)
 
@@ -186,7 +210,7 @@ func (psql *postgresDBClient) GetArticlesByTag(tag string) (*[]domain.Article, e
 		var article domain.Article
 		err := rows.Scan(
 			&article.ArticleID, &article.Title, &article.Subtitle, &article.Introduction,
-			&article.Body, pq.Array(&article.Tags), &article.PublishDate,
+			&article.Body, pq.Array(&article.Tags), &article.PublishDate, &article.Author.ID,
 			&article.Author.Name, &article.Author.Bio, &article.Author.ProfilePicture,
 			pq.Array(&article.Author.SocialLinks), &article.Author.Followers,
 			&article.Author.Following,
@@ -202,7 +226,7 @@ func (psql *postgresDBClient) GetArticlesByTag(tag string) (*[]domain.Article, e
 
 func (psql *postgresDBClient) GetArticles() (*[]domain.Article, error) {
 	query := fmt.Sprintf(`
-	SELECT article_id, title, subtitle, introduction, body, tags, publish_date,author_name, author_bio, author_profile_pic, author_social_links,author_followers, author_following
+	SELECT article_id, title, subtitle, introduction, body, tags, publish_date,author_id, author_name,author_bio, author_profile_pic, author_social_links,author_followers, author_following
 	FROM %s `, psql.tablename)
 
 	rows, err := psql.db.Query(query)
@@ -210,12 +234,12 @@ func (psql *postgresDBClient) GetArticles() (*[]domain.Article, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var articles []domain.Article
+	articles := []domain.Article{}
 	for rows.Next() {
 		var article domain.Article
 		err := rows.Scan(
 			&article.ArticleID, &article.Title, &article.Subtitle, &article.Introduction,
-			&article.Body, pq.Array(&article.Tags), &article.PublishDate,
+			&article.Body, pq.Array(&article.Tags), &article.PublishDate, &article.Author.ID,
 			&article.Author.Name, &article.Author.Bio, &article.Author.ProfilePicture,
 			pq.Array(&article.Author.SocialLinks), &article.Author.Followers,
 			&article.Author.Following,
@@ -232,10 +256,10 @@ func (psql *postgresDBClient) GetArticles() (*[]domain.Article, error) {
 func (psql *postgresDBClient) UpdateArticle(article *domain.Article) (*domain.Article, error) {
 	_, err := psql.db.Exec(fmt.Sprintf(`
 		UPDATE %s
-		SET title = $1, subtitle = $2, introduction = $3, body = $4,tags = $5, publish_date = $6,author_name = $7, author_bio = $8, author_profile_pic = $9,author_social_links = $10, author_followers = $11, author_following = $12
+		SET title = $1, subtitle = $2, introduction = $3, body = $4,tags = $5, publish_date = $6,author_id = $7,author_name = $8, author_bio = $9, author_profile_pic = $10,author_social_links = $11, author_followers = $12, author_following = $13
 		WHERE id = $13`, psql.tablename),
 		article.Title, article.Subtitle, article.Introduction, article.Body,
-		pq.Array(article.Tags), article.PublishDate,
+		pq.Array(article.Tags), article.PublishDate, article.Author.ID,
 		article.Author.Name, article.Author.Bio, article.Author.ProfilePicture,
 		pq.Array(article.Author.SocialLinks), article.Author.Followers,
 		article.Author.Following, article.ArticleID,
