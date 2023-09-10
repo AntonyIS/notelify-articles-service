@@ -40,7 +40,8 @@ jobs:
       uses: mr-smithers-excellent/docker-build-push@v6
       with:
         image: notelify-articles-svc-ecr
-        registry: ${{ secrets.ARTICLES_ECR }}
+        tags: latest
+        registry: 349088074840.dkr.ecr.me-south-1.amazonaws.com
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
