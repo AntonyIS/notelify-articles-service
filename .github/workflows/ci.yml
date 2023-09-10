@@ -32,8 +32,8 @@ jobs:
       with:
         image: antonyinjila/notelify-articels-service
         tags: latest
-        registry: registry-url.io
-        dockerfile: Dockerfile.ci
+        registry: docker.io
+        dockerfile: Dockerfile
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
           
