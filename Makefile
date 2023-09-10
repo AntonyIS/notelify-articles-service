@@ -1,8 +1,8 @@
 build:
-	go build -o bin/notlify-user-svc
+	go build -o bin/notelify-articles-service
 
 serve-prod: build
-	./bin/notlify-user-svc -env=prod
+	./bin/notelify-articles-service -env=prod
 
-serve-dev: build
-	./bin/notlify-user-svc -env=dev
+serve: build
+	./bin/notelify-articles-service -env=dev

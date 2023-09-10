@@ -23,7 +23,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
 	// Logger service
 	logger := logger.NewLoggerService(conf.LoggerURL)
 	// // Postgres Client

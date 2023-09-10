@@ -15,13 +15,25 @@ func InitGinRoutes(svc ports.ArticleService, logger logger.LoggerType, conf appC
 
 	router := gin.Default()
 
-	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:8001"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
-		AllowHeaders:     []string{"Origin", "Content-Type"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-	}))
+	if conf.Env == "prod" {
+		router.Use(cors.New(cors.Config{
+			AllowOrigins:     []string{"http://notelify-client-service:3000"},
+			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+			AllowHeaders:     []string{"Origin", "Content-Type"},
+			ExposeHeaders:    []string{"Content-Length"},
+			AllowCredentials: true,
+		}))
+
+	} else {
+		router.Use(cors.New(cors.Config{
+			AllowOrigins:     []string{"http://localhost:3000", "http://localhost:8001"},
+			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+			AllowHeaders:     []string{"Origin", "Content-Type"},
+			ExposeHeaders:    []string{"Content-Length"},
+			AllowCredentials: true,
+		}))
+
+	}
 
 	handler := NewGinHandler(svc, conf.SECRET_KEY)
 
