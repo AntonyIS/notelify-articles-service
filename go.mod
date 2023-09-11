@@ -3,7 +3,6 @@ module github.com/AntonyIS/notelify-articles-service
 go 1.18
 
 require (
-	github.com/AntonyIS/notelify-articles-service v0.0.0-20230911080745-11b900efdee7
 	github.com/aws/aws-sdk-go v1.45.6
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.9.1
