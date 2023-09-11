@@ -3,8 +3,8 @@ package app
 import (
 	"net/http"
 
-	"github.com/AntonyIS/notlify-content-svc/internal/core/domain"
-	"github.com/AntonyIS/notlify-content-svc/internal/core/ports"
+	"github.com/AntonyIS/notelify-articles-service/internal/core/domain"
+	"github.com/AntonyIS/notelify-articles-service/internal/core/ports"
 	"github.com/gin-gonic/gin"
 )
 
@@ -40,6 +40,7 @@ func (h handler) CreateArticle(ctx *gin.Context) {
 		})
 		return
 	}
+
 	content, err := h.svc.CreateArticle(res)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
