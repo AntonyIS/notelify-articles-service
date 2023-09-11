@@ -1,1 +1,1 @@
-# Notelify service
+# Notelify articles service
