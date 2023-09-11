@@ -30,7 +30,7 @@ jobs:
     - name: Push to Docker
       uses: mr-smithers-excellent/docker-build-push@v6
       with:
-        image: antonyinjila/notelify-articels-service
+        image: antonyinjila/notelify-articles-service
         tags: latest
         registry: docker.io
         username: ${{ secrets.DOCKER_USERNAME }}
