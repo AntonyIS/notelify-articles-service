@@ -28,6 +28,16 @@ jobs:
       run: go test -v ./...
 
     - name: Push to Docker
+      env:
+        AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
+        AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
+        AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+        DatabasePassword: ${{ secrets.DatabasePassword }}
+        DatabaseUser: ${{ secrets.DatabaseUser }}
+        DatabaseHost: ${{ secrets.DatabaseHost }}
+        LoggerURL: ${{ secrets.LoggerURL }}
+        RDSInstanceIdentifier: ${{ secrets.RDSInstanceIdentifier }}
+        
       uses: mr-smithers-excellent/docker-build-push@v6
       with:
         image: antonyinjila/notelify-articles-service
@@ -37,12 +47,19 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
 
     - name : Push to AWS ECR
+      env:
+          AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
+          AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+          DatabasePassword: ${{ secrets.DatabasePassword }}
+          DatabaseUser: ${{ secrets.DatabaseUser }}
+          DatabaseHost: ${{ secrets.DatabaseHost }}
+          LoggerURL: ${{ secrets.LoggerURL }}
+          RDSInstanceIdentifier: ${{ secrets.RDSInstanceIdentifier }}
       uses: mr-smithers-excellent/docker-build-push@v6
       with:
         image: notelify-articles-svc-ecr
         tags: latest
         registry: 349088074840.dkr.ecr.me-south-1.amazonaws.com
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    
           
