@@ -47,15 +47,19 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
 
     - name : Push to AWS ECR
-      uses: mr-smithers-excellent/docker-build-push@v6
+    - uses: actions/checkout@v2
+    - uses: docker://ghcr.io/kciter/aws-ecr-action:latest
       with:
-        image: notelify-articles-svc-ecr
+        access_key_id: ${{ secrets.AWS_ACCESS_KEY }}
+        secret_access_key: ${{ secrets.AWS_SECRET_KEY }}
+        account_id: ${{ secrets.AWS_ACCOUNT_ID }}
+        repo: notelify-articles-svc-ecr
+        region: me-south-1
         tags: latest
-        registry: 349088074840.dkr.ecr.me-south-1.amazonaws.com
-      
-      env:
-        AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
-        AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
+        create_repo: true
+        image_scanning_configuration: true
+        set_repo_policy: true
+        repo_policy_file: repo-policy.json
           
      
           
