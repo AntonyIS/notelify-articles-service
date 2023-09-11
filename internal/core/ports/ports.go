@@ -1,6 +1,6 @@
 package ports
 
-import "github.com/AntonyIS/notlify-content-svc/internal/core/domain"
+import "github.com/AntonyIS/notelify-articles-service/internal/core/domain"
 
 type ContentService interface {
 	CreateContent(Content *domain.Content) (*domain.Content, error)

@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 
-	appConfig "github.com/AntonyIS/notlify-content-svc/config"
-	"github.com/AntonyIS/notlify-content-svc/internal/adapters/logger"
-	"github.com/AntonyIS/notlify-content-svc/internal/core/domain"
+	appConfig "github.com/AntonyIS/notelify-articles-service/config"
+	"github.com/AntonyIS/notelify-articles-service/internal/adapters/logger"
+	"github.com/AntonyIS/notelify-articles-service/internal/core/domain"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/rds"

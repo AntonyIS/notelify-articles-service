@@ -3,8 +3,8 @@ package services
 import (
 	"time"
 
-	"github.com/AntonyIS/notlify-content-svc/internal/core/domain"
-	"github.com/AntonyIS/notlify-content-svc/internal/core/ports"
+	"github.com/AntonyIS/notelify-articles-service/internal/core/domain"
+	"github.com/AntonyIS/notelify-articles-service/internal/core/ports"
 	"github.com/google/uuid"
 )
 

@@ -3,11 +3,11 @@ package main
 import (
 	"flag"
 
-	"github.com/AntonyIS/notlify-content-svc/config"
-	"github.com/AntonyIS/notlify-content-svc/internal/adapters/app"
-	"github.com/AntonyIS/notlify-content-svc/internal/adapters/logger"
-	"github.com/AntonyIS/notlify-content-svc/internal/adapters/repository/postgres"
-	"github.com/AntonyIS/notlify-content-svc/internal/core/services"
+	"github.com/AntonyIS/notelify-articles-service/config"
+	"github.com/AntonyIS/notelify-articles-service/internal/adapters/app"
+	"github.com/AntonyIS/notelify-articles-service/internal/adapters/logger"
+	"github.com/AntonyIS/notelify-articles-service/internal/adapters/repository/postgres"
+	"github.com/AntonyIS/notelify-articles-service/internal/core/services"
 )
 
 var env string

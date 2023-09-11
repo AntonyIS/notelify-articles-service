@@ -3,9 +3,9 @@ package app
 import (
 	"fmt"
 
-	appConfig "github.com/AntonyIS/notlify-content-svc/config"
-	"github.com/AntonyIS/notlify-content-svc/internal/adapters/logger"
-	"github.com/AntonyIS/notlify-content-svc/internal/core/ports"
+	appConfig "github.com/AntonyIS/notelify-articles-service/config"
+	"github.com/AntonyIS/notelify-articles-service/internal/adapters/logger"
+	"github.com/AntonyIS/notelify-articles-service/internal/core/ports"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
