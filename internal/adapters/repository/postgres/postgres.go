@@ -104,34 +104,34 @@ func NewPostgresClient(appConfig appConfig.Config, logger logger.LoggerType) (*p
 }
 
 func (psql *postgresDBClient) CreateArticle(article *domain.Article) (*domain.Article, error) {
-	query := fmt.Sprintf(`
-		INSERT INTO %s (
-			article_id,title,subtitle,introduction,body,tags,publish_date,author_id,author_name,author_bio,author_profile_pic,author_social_links,author_followers,author_following)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
-		psql.tablename)
-	_, err := psql.db.Exec(
-		query,
-		article.ArticleID,
-		article.Title,
-		article.Subtitle,
-		article.Introduction,
-		article.Body,
-		pq.Array(article.Tags),
-		article.PublishDate,
-		article.Author.ID,
-		article.Author.Name,
-		article.Author.Bio,
-		article.Author.ProfilePicture,
-		pq.Array(article.Author.SocialLinks),
-		article.Author.Followers,
-		article.Author.Following,
-	)
+	// query := fmt.Sprintf(`
+	// 	INSERT INTO %s (
+	// 		article_id,title,subtitle,introduction,body,tags,publish_date,author_id,author_name,author_bio,author_profile_pic,author_social_links,author_followers,author_following)
+	// 	VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+	// 	psql.tablename)
+	// _, err := psql.db.Exec(
+	// 	query,
+	// 	article.ArticleID,
+	// 	article.Title,
+	// 	article.Subtitle,
+	// 	article.Introduction,
+	// 	article.Body,
+	// 	pq.Array(article.Tags),
+	// 	article.PublishDate,
+	// 	article.Author.ID,
+	// 	article.Author.Name,
+	// 	article.Author.Bio,
+	// 	article.Author.ProfilePicture,
+	// 	pq.Array(article.Author.SocialLinks),
+	// 	article.Author.Followers,
+	// 	article.Author.Following,
+	// )
 
-	if err != nil {
-		psql.loggerService.PostLogMessage(err.Error())
-		return nil, err
-	}
-
+	// if err != nil {
+	// 	psql.loggerService.PostLogMessage(err.Error())
+	// 	return nil, err
+	// }
+	fmt.Println(article)
 	return article, nil
 }
 
