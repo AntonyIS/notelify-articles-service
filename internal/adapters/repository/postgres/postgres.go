@@ -41,7 +41,7 @@ func NewPostgresClient(appConfig appConfig.Config, logger logger.LoggerType) (*p
 		}))
 		rdsClient := rds.New(awsSession)
 
-		// Describe the DB instance to get its endpoint
+
 		describeInput := &rds.DescribeDBInstancesInput{
 			DBInstanceIdentifier: &rdsInstanceIdentifier,
 		}
@@ -56,7 +56,6 @@ func NewPostgresClient(appConfig appConfig.Config, logger logger.LoggerType) (*p
 		}
 
 		dsn = fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=require", host, port, dbname, user, password)
-		fmt.Println(dsn)
 	}
 
 	db, err := sql.Open("postgres", dsn)
