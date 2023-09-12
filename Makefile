@@ -4,5 +4,5 @@ build:
 serve-prod: build
 	./bin/notelify-articles-service -env=prod
 
-serve: build
+serve-dev: build
 	./bin/notelify-articles-service -env=dev

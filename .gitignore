@@ -21,7 +21,6 @@
 go.work
 
 bin
-
 .env
 /bin
 /sysLogs
