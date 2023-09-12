@@ -34,13 +34,12 @@ func NewPostgresClient(appConfig appConfig.Config, logger logger.LoggerType) (*p
 
 	if appConfig.Env == "dev" {
 		dsn = fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable", host, port, user, dbname, password)
-		
+
 	} else {
 		awsSession := session.Must(session.NewSession(&aws.Config{
 			Region: aws.String(region),
 		}))
 		rdsClient := rds.New(awsSession)
-
 
 		describeInput := &rds.DescribeDBInstancesInput{
 			DBInstanceIdentifier: &rdsInstanceIdentifier,
@@ -133,7 +132,7 @@ func (psql *postgresDBClient) CreateArticle(article *domain.Article) (*domain.Ar
 		psql.loggerService.PostLogMessage(err.Error())
 		return nil, err
 	}
-	fmt.Println(article)
+
 	return article, nil
 }
 
@@ -273,7 +272,7 @@ func (psql *postgresDBClient) UpdateArticle(article *domain.Article) (*domain.Ar
 }
 
 func (psql *postgresDBClient) DeleteArticle(article_id string) error {
-	_, err := psql.db.Exec(fmt.Sprintf("DELETE FROM %s WHERE id = $1", psql.tablename), article_id)
+	_, err := psql.db.Exec(fmt.Sprintf("DELETE FROM %s WHERE article_id = $1", psql.tablename), article_id)
 	if err != nil {
 		return err
 	}
