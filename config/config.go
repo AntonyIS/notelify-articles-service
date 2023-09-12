@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -37,13 +38,13 @@ func LoadEnv() error {
 func NewConfig(Env string) (*Config, error) {
 	if Env == "dev" || Env == "testing" {
 		// Read .env file in dev environment
-		// Production env has this sorted out 
+		// Production env has this sorted out
 		err := godotenv.Load(".env")
 		if err != nil {
 			return nil, err
 		}
 	}
-	
+
 	var (
 		AWS_ACCESS_KEY        = os.Getenv("AWS_ACCESS_KEY")
 		AWS_SECRET_KEY        = os.Getenv("AWS_SECRET_KEY")
@@ -100,5 +101,6 @@ func NewConfig(Env string) (*Config, error) {
 		DatabasePassword:      DatabasePassword,
 	}
 
+	fmt.Println(&config)
 	return &config, nil
 }
