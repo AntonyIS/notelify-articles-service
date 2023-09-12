@@ -25,12 +25,25 @@ type Config struct {
 	Testing               bool
 }
 
-func NewConfig(Env string) (*Config, error) {
+func LoadEnv() error {
 	err := godotenv.Load(".env")
 
 	if err != nil {
-		return nil, err
+		return err
 	}
+	return nil
+}
+
+func NewConfig(Env string) (*Config, error) {
+	if Env == "dev" || Env == "testing" {
+		// Read .env file in dev environment
+		// Production env has this sorted out 
+		err := godotenv.Load(".env")
+		if err != nil {
+			return nil, err
+		}
+	}
+	
 	var (
 		AWS_ACCESS_KEY        = os.Getenv("AWS_ACCESS_KEY")
 		AWS_SECRET_KEY        = os.Getenv("AWS_SECRET_KEY")
