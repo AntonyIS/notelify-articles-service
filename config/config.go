@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -20,7 +19,7 @@ type Config struct {
 	DatabaseName          string
 	DatabaseUser          string
 	DatabaseHost          string
-	DatabasePort          int
+	DatabasePort          string
 	DatabasePassword      string
 	Debugging             bool
 	Testing               bool
@@ -57,8 +56,8 @@ func NewConfig(Env string) (*Config, error) {
 		Port                  = "8001"
 		ContentTable          = "Articles"
 		DatabaseName          = "postgres"
-		DatabasePort          = 5432
-		DatabaseHost          = ""
+		DatabasePort          = "5432"
+		DatabaseHost          = "localhost"
 		Testing               = false
 		Debugging             = false
 	)
@@ -67,13 +66,10 @@ func NewConfig(Env string) (*Config, error) {
 	case "testing":
 		Testing = true
 		Debugging = true
-		DatabaseHost = "localhost"
 
 	case "dev":
 		Testing = true
 		Debugging = true
-		DatabaseHost = "localhost"
-		DatabaseUser = os.Getenv("DatabaseUser")
 
 	case "prod":
 		Testing = false
@@ -101,6 +97,5 @@ func NewConfig(Env string) (*Config, error) {
 		DatabasePassword:      DatabasePassword,
 	}
 
-	fmt.Println(&config)
 	return &config, nil
 }
