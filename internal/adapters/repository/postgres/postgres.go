@@ -32,7 +32,7 @@ func NewPostgresClient(appConfig appConfig.Config, logger logger.LoggerType) (*p
 	rdsInstanceIdentifier := appConfig.RDSInstanceIdentifier
 	var dsn string
 
-	if appConfig.Env == "dev" {
+	if appConfig.Env == "dev" || appConfig.Env == "test" {
 		dsn = fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable", host, port, user, dbname, password)
 
 	} else {
@@ -158,7 +158,7 @@ func (psql *postgresDBClient) GetArticleByID(article_id string) (*domain.Article
 		&article.Author.Following,
 	)
 	if err != nil {
-		return &domain.Article{}, err
+		return nil, err
 	}
 	return article, nil
 }
@@ -196,7 +196,7 @@ func (psql *postgresDBClient) GetArticlesByAuthor(author_id string) (*[]domain.A
 
 func (psql *postgresDBClient) GetArticlesByTag(tag string) (*[]domain.Article, error) {
 	query := fmt.Sprintf(`
-	SELECT id, title, subtitle, introduction, body, tags, publish_date,author_id,author_name, author_bio, author_profile_pic, author_social_links,author_followers, author_following
+	SELECT article_id, title, subtitle, introduction, body, tags, publish_date,author_id,author_name, author_bio, author_profile_pic, author_social_links,author_followers, author_following
 	FROM %s WHERE $1 = ANY(tags)`, psql.tablename)
 	rows, err := psql.db.Query(query, tag)
 
@@ -257,17 +257,40 @@ func (psql *postgresDBClient) GetArticles() (*[]domain.Article, error) {
 func (psql *postgresDBClient) UpdateArticle(article *domain.Article) (*domain.Article, error) {
 	_, err := psql.db.Exec(fmt.Sprintf(`
 		UPDATE %s
-		SET title = $1, subtitle = $2, introduction = $3, body = $4,tags = $5, publish_date = $6,author_id = $7,author_name = $8, author_bio = $9, author_profile_pic = $10,author_social_links = $11, author_followers = $12, author_following = $13
-		WHERE id = $13`, psql.tablename),
-		article.Title, article.Subtitle, article.Introduction, article.Body,
-		pq.Array(article.Tags), article.PublishDate, article.Author.ID,
-		article.Author.Name, article.Author.Bio, article.Author.ProfilePicture,
-		pq.Array(article.Author.SocialLinks), article.Author.Followers,
-		article.Author.Following, article.ArticleID,
+		SET title=$1,
+		subtitle=$2,
+		introduction=$3,
+		body=$4,
+		tags=$5,
+		publish_date=$6,
+		author_id=$7,
+		author_name=$8,
+		author_bio=$9,
+		author_profile_pic=$10,
+		author_social_links=$11,
+		author_followers=$12,
+		author_following=$13
+		WHERE article_id=$14`, psql.tablename),
+		article.Title,
+		article.Subtitle,
+		article.Introduction,
+		article.Body,
+		pq.Array(article.Tags),
+		article.PublishDate,
+		article.Author.ID,
+		article.Author.Name,
+		article.Author.Bio,
+		article.Author.ProfilePicture,
+		pq.Array(article.Author.SocialLinks),
+		article.Author.Followers,
+		article.Author.Following,
+		article.ArticleID,
 	)
+
 	if err != nil {
 		return nil, err
 	}
+
 	return psql.GetArticleByID(article.ArticleID)
 }
 

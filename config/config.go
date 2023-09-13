@@ -35,10 +35,14 @@ func LoadEnv() error {
 }
 
 func NewConfig(Env string) (*Config, error) {
-	if Env == "dev" || Env == "testing" {
-		// Read .env file in dev environment
-		// Production env has this sorted out
+	if Env == "dev" {
 		err := godotenv.Load(".env")
+		if err != nil {
+			return nil, err
+		}
+	}
+	if Env == "test" {
+		err := godotenv.Load("../../../.env")
 		if err != nil {
 			return nil, err
 		}
@@ -63,9 +67,10 @@ func NewConfig(Env string) (*Config, error) {
 	)
 
 	switch Env {
-	case "testing":
+	case "test":
 		Testing = true
 		Debugging = true
+		ContentTable = "TestArticles"
 
 	case "dev":
 		Testing = true
