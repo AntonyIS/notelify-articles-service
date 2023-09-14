@@ -35,7 +35,7 @@ func NewPostgresClient(appConfig appConfig.Config, logger logger.LoggerType) (*p
 	if appConfig.Env == "dev" || appConfig.Env == "test" {
 		dsn = fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable", host, port, user, dbname, password)
 
-	} else {
+	} else if appConfig.Env == "prod" {
 		awsSession := session.Must(session.NewSession(&aws.Config{
 			Region: aws.String(region),
 		}))

@@ -40,8 +40,7 @@ func NewConfig(Env string) (*Config, error) {
 		if err != nil {
 			return nil, err
 		}
-	}
-	if Env == "test" {
+	} else if Env == "test" {
 		err := godotenv.Load("../../../.env")
 		if err != nil {
 			return nil, err
@@ -67,20 +66,26 @@ func NewConfig(Env string) (*Config, error) {
 	)
 
 	switch Env {
-	case "test":
-		Testing = true
-		Debugging = true
-		ContentTable = "TestArticles"
-
-	case "dev":
-		Testing = true
-		Debugging = true
-
 	case "prod":
 		Testing = false
 		Debugging = false
 		DatabaseHost = os.Getenv("DatabaseHost")
 		DatabaseName = "notlify_db_init"
+	case "test":
+		Testing = true
+		Debugging = true
+		ContentTable = "TestArticles"
+	case "test_cicd":
+		Testing = true
+		Debugging = true
+		ContentTable = "TestArticles"
+	case "dev":
+		Testing = true
+		Debugging = true
+	default:
+		Testing = true
+		Debugging = true
+		ContentTable = "TestArticles"
 	}
 
 	config := Config{
