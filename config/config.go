@@ -75,6 +75,10 @@ func NewConfig(Env string) (*Config, error) {
 		Testing = true
 		Debugging = true
 		ContentTable = "TestArticles"
+	case "test_cicd":
+		Testing = true
+		Debugging = true
+		ContentTable = "TestArticles"
 	case "dev":
 		Testing = true
 		Debugging = true
