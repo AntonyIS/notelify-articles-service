@@ -71,18 +71,23 @@ func NewConfig(Env string) (*Config, error) {
 		Debugging = false
 		DatabaseHost = os.Getenv("DatabaseHost")
 		DatabaseName = "notlify_db_init"
+
+	case "test_prod":
+		Testing = true
+		Debugging = true
+		DatabaseHost = os.Getenv("DatabaseHost")
+		DatabaseName = "notlify_db_init"
+		ContentTable = "TestArticles"
+
 	case "test":
 		Testing = true
 		Debugging = true
 		ContentTable = "TestArticles"
-	
+
 	case "dev":
 		Testing = true
 		Debugging = true
-	default:
-		Testing = true
-		Debugging = true
-		ContentTable = "TestArticles"
+
 	}
 
 	config := Config{
