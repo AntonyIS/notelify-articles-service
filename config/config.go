@@ -75,12 +75,7 @@ func NewConfig(Env string) (*Config, error) {
 		Testing = true
 		Debugging = true
 		ContentTable = "TestArticles"
-	case "test_cicd":
-		Testing = true
-		Debugging = true
-		ContentTable = "TestArticles"
-		DatabaseHost = os.Getenv("DatabaseHost")
-		DatabaseName = "notlify_db_init"
+	
 	case "dev":
 		Testing = true
 		Debugging = true

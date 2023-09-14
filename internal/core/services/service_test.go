@@ -18,7 +18,7 @@ import (
 )
 
 func TestApplicationService(t *testing.T) {
-	env := "test_cicd"
+	env := "prod"
 	conf, err := config.NewConfig(env)
 	if err != nil {
 		panic(err)
