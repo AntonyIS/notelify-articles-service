@@ -23,8 +23,8 @@ jobs:
 
     - name: Test
       env:
-        DatabaseHost: ${{ DATABASEHOST }}
-        DatabasePassword: ${{ DATABASEPASSWORD }}
+        DatabaseHost: ${{ secrets.DATABASEHOST }}
+        DatabasePassword: ${{ secrets.DATABASEPASSWORD }}
         DatabaseUser: postgres
       run: go test -v ./...
 
