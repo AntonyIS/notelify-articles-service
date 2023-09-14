@@ -177,7 +177,7 @@ func TestApplicationService(t *testing.T) {
 		article.Body = newBody
 
 		res, err := articleService.UpdateArticle(article)
-		// fmt.Println(article, res)
+		
 		if res.Title != newTitle {
 			t.Error(fmt.Sprintf("Expected title '%s' got '%s", newTitle, res.Title))
 		}
@@ -230,7 +230,7 @@ func TestApplicationService(t *testing.T) {
 		if err != nil {
 			t.Error("Expected to delete all articles: ", err)
 		}
-		fmt.Println(articles)
+		
 		if len(*articles) > 1 {
 			t.Error("Expected 0 articles, found", len(*articles))
 		}
