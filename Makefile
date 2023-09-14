@@ -6,5 +6,8 @@ serve-prod: build
 serve-dev: build
 	./bin/notelify-articles-service -env=dev
 
+
+
 test:
-	go test -v ./...
+	go test -v -tags=myenv ./...
+	Env=dev go test -v -tags=myenv ./...
