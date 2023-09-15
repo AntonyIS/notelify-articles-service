@@ -40,7 +40,9 @@ func TestApplicationService(t *testing.T) {
 		Followers:      100,
 	}
 
+	err = articleService.DeleteArticleAll()
 	t.Run("Test create new article", func(t *testing.T) {
+		err := articleService.DeleteArticleAll()
 		title := "Article - Create article"
 		body := "Article body"
 		tags := []string{"Golang"}
@@ -51,7 +53,7 @@ func TestApplicationService(t *testing.T) {
 		}
 		article.Author = author
 
-		article, err := articleService.CreateArticle(article)
+		article, err = articleService.CreateArticle(article)
 
 		if err != nil {
 			t.Error(err)
@@ -177,7 +179,7 @@ func TestApplicationService(t *testing.T) {
 		article.Body = newBody
 
 		res, err := articleService.UpdateArticle(article)
-		
+
 		if res.Title != newTitle {
 			t.Error(fmt.Sprintf("Expected title '%s' got '%s", newTitle, res.Title))
 		}
@@ -230,7 +232,7 @@ func TestApplicationService(t *testing.T) {
 		if err != nil {
 			t.Error("Expected to delete all articles: ", err)
 		}
-		
+
 		if len(*articles) > 1 {
 			t.Error("Expected 0 articles, found", len(*articles))
 		}
