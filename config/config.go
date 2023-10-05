@@ -25,14 +25,6 @@ type Config struct {
 	Testing               bool
 }
 
-func LoadEnv() error {
-	err := godotenv.Load(".env")
-
-	if err != nil {
-		return err
-	}
-	return nil
-}
 
 func NewConfig(Env string) (*Config, error) {
 	if Env == "dev" {
@@ -83,6 +75,7 @@ func NewConfig(Env string) (*Config, error) {
 		Testing = true
 		Debugging = true
 		ContentTable = "TestArticles"
+		
 
 	case "dev":
 		Testing = true

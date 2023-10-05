@@ -21,7 +21,6 @@ type postgresDBClient struct {
 }
 
 func NewPostgresClient(appConfig appConfig.Config, logger logger.LoggerType) (*postgresDBClient, error) {
-
 	dbname := appConfig.DatabaseName
 	tablename := appConfig.ContentTable
 	user := appConfig.DatabaseUser
