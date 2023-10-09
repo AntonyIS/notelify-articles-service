@@ -26,6 +26,7 @@ jobs:
         DatabaseHost: ${{ secrets.DATABASEHOST }}
         DatabasePassword: ${{ secrets.DATABASEPASSWORD }}
         DatabaseUser: postgres
+
       run: go test -v ./...
 
     - name: Push to Docker
