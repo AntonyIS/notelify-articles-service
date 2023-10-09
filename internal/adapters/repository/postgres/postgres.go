@@ -269,7 +269,7 @@ func (psql *postgresDBClient) UpdateArticle(article *domain.Article) (*domain.Ar
 		author_profile_pic=$10,
 		author_social_links=$11,
 		author_followers=$12,
-		author_following=$13
+		author_following=$13,
 		WHERE article_id=$14`, psql.tablename),
 		article.Title,
 		article.Subtitle,
