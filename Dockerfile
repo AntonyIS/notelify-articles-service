@@ -35,4 +35,4 @@ COPY --from=builder /app/src .
 EXPOSE 8001
 
 #Command to run the executable
-CMD ["./src" , "-env=prod"]
+CMD ["./src" , "-env=dev"]
