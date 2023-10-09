@@ -26,10 +26,10 @@ func InitGinRoutes(svc ports.ArticleService, logger logger.LoggerType, conf appC
 
 	} else {
 		router.Use(cors.New(cors.Config{
-			AllowOrigins: []string{"http://localhost:3000"},
-			AllowMethods: []string{"GET", "POST", "PUT", "DELETE"},
-			AllowHeaders: []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
-			// ExposeHeaders:    []string{"Content-Length"},
+			AllowOrigins:     []string{"http://localhost:3000"},
+			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+			AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
+			ExposeHeaders:    []string{"Content-Length"},
 			AllowCredentials: true,
 		}))
 

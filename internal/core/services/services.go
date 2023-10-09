@@ -22,6 +22,13 @@ func NewArticleManagementService(repo ports.ArticleRepository) *articleManagemen
 func (svc *articleManagementService) CreateArticle(article *domain.Article) (*domain.Article, error) {
 	article.ArticleID = uuid.New().String()
 	article.PublishDate = time.Now()
+	article.Author.ID = "2361a252-215b-4174-805c-6b67fcb428dc"
+	article.Author.Name = "Antony Injila"
+	article.Author.Bio = "Hello guys, if you want to become a professional Java developer or want to take your Java skill to next level but are not sure which technology, tools,"
+	article.Author.ProfilePicture = " "
+	article.Author.SocialLinks = []string{"https://medium.com/@antonyshikubu"}
+	article.Author.Following = 1000
+	article.Author.Followers = 100
 	return svc.repo.CreateArticle(article)
 }
 
