@@ -22,16 +22,29 @@ type dynamodbClient struct {
 	tablename string
 }
 
-func NewDynamoDBClient(c appConfig.Config, logger logger.LoggerType) ports.ArticleRepository {
+func NewDynamoDBClient(c appConfig.Config, logger logger.LoggerType) (ports.ArticleRepository, error) {
+	// Create AWS credentials
 	creds := credentials.NewStaticCredentials(c.AWS_ACCESS_KEY, c.AWS_SECRET_KEY, "")
+
 	sess := session.Must(session.NewSession(&aws.Config{
 		Region:      aws.String(c.AWS_DEFAULT_REGION),
 		Credentials: creds,
 	}))
+
+	// dynamodb client
+	client := *dynamodb.New(sess)
+
+	// Create tables
+	err := InitTables(c, client)
+
+	if err != nil {
+		return nil, err
+	}
+
 	return &dynamodbClient{
 		client:    *dynamodb.New(sess),
 		tablename: c.ContentTable,
-	}
+	}, nil
 }
 
 func (db dynamodbClient) CreateArticle(article *domain.Article) (*domain.Article, error) {
@@ -147,6 +160,7 @@ func (db dynamodbClient) GetArticles() (*[]domain.Article, error) {
 	)
 	expr, err := expression.NewBuilder().WithFilter(filt).WithProjection(proj).Build()
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 	params := &dynamodb.ScanInput{
@@ -225,5 +239,56 @@ func (db dynamodbClient) DeleteArticleAll() error {
 	for _, article := range *articles {
 		db.DeleteArticle(article.ArticleID)
 	}
+	return nil
+}
+
+func InitTables(c appConfig.Config, client dynamodb.DynamoDB) error {
+	keySchema := []*dynamodb.KeySchemaElement{
+		{
+			AttributeName: aws.String("article_id"),
+			KeyType:       aws.String("HASH"), // HASH indicates the partition key
+		},
+	}
+
+	// Define attribute definitions (including "tags" as a String)
+	attributeDefinitions := []*dynamodb.AttributeDefinition{
+		{
+			AttributeName: aws.String("article_id"),
+			AttributeType: aws.String("S"), // S indicates String
+		},
+	}
+
+	// Define the provisioned throughput for the table
+	provisionedThroughput := &dynamodb.ProvisionedThroughput{
+		ReadCapacityUnits:  aws.Int64(5), // Adjust as needed
+		WriteCapacityUnits: aws.Int64(5), // Adjust as needed
+	}
+
+
+	tableInput := &dynamodb.DescribeTableInput{
+		TableName: &c.ContentTable,
+	}
+	// Create table if does not exist
+	_, err := client.DescribeTable(tableInput)
+
+	if err != nil {
+		if _, ok := err.(*dynamodb.ResourceInUseException); !ok {
+			// Create the table input with the GSI
+			createTableInput := &dynamodb.CreateTableInput{
+				TableName:              aws.String(c.ContentTable),
+				KeySchema:              keySchema,
+				AttributeDefinitions:   attributeDefinitions,
+				ProvisionedThroughput:  provisionedThroughput,
+			}
+
+			// Create the DynamoDB table with the GSI
+			_, err = client.CreateTable(createTableInput)
+			if err != nil {
+				fmt.Println("Error creating table:", err)
+				return err
+			}
+		}
+	}
+
 	return nil
 }

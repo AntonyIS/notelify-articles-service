@@ -88,7 +88,7 @@ func (h handler) GetArticlesByAuthor(ctx *gin.Context) {
 }
 
 func (h handler) GetArticlesByTag(ctx *gin.Context) {
-	tag := ctx.Param("tag")
+	tag := ctx.Param("tag_name")
 	articles, err := h.svc.GetArticlesByTag(tag)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
@@ -100,6 +100,14 @@ func (h handler) GetArticlesByTag(ctx *gin.Context) {
 }
 
 func (h handler) UpdateArticle(ctx *gin.Context) {
+	article_id := ctx.Param("article_id")
+	article, err := h.svc.GetArticleByID(article_id)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{
+			"err": err.Error(),
+		})
+		return
+	}
 	var res *domain.Article
 	if err := ctx.ShouldBindJSON(&res); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -107,7 +115,7 @@ func (h handler) UpdateArticle(ctx *gin.Context) {
 		})
 		return
 	}
-	article, err := h.svc.UpdateArticle(res)
+	article, err = h.svc.UpdateArticle(res)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"err": err.Error(),

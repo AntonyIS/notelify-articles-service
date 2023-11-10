@@ -1,6 +1,9 @@
 package services
 
 import (
+	"fmt"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/AntonyIS/notelify-articles-service/internal/core/domain"
@@ -22,13 +25,6 @@ func NewArticleManagementService(repo ports.ArticleRepository) *articleManagemen
 func (svc *articleManagementService) CreateArticle(article *domain.Article) (*domain.Article, error) {
 	article.ArticleID = uuid.New().String()
 	article.PublishDate = time.Now()
-	article.Author.ID = "2361a252-215b-4174-805c-6b67fcb428dc"
-	article.Author.Name = "Antony Injila"
-	article.Author.Bio = "Hello guys, if you want to become a professional Java developer or want to take your Java skill to next level but are not sure which technology, tools,"
-	article.Author.ProfilePicture = " "
-	article.Author.SocialLinks = []string{"https://medium.com/@antonyshikubu"}
-	article.Author.Following = 1000
-	article.Author.Followers = 100
 	return svc.repo.CreateArticle(article)
 }
 
@@ -41,7 +37,22 @@ func (svc *articleManagementService) GetArticlesByAuthor(author_id string) (*[]d
 }
 
 func (svc *articleManagementService) GetArticlesByTag(tag string) (*[]domain.Article, error) {
-	return svc.repo.GetArticlesByTag(tag)
+	articles, err := svc.GetArticles()
+	if err != nil {
+		return nil, err
+	}
+	articleArray := []domain.Article{}
+	for _, article := range *articles {
+		arr := article.Tags
+		sort.Strings(arr)
+		// Perform a case-insensitive search using sort.SearchStrings
+		index := sort.SearchStrings(arr, tag)
+		if index < len(arr) && (arr[index] == tag || arr[index] == strings.ToLower(tag) || arr[index] == strings.ToUpper(tag)) {
+			articleArray = append(articleArray, article)
+			fmt.Println(arr, index, tag)
+		}
+	}
+	return &articleArray, nil
 }
 
 func (svc *articleManagementService) GetArticles() (*[]domain.Article, error) {

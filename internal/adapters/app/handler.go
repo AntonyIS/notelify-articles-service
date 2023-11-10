@@ -44,8 +44,8 @@ func InitGinRoutes(svc ports.ArticleService, logger logger.LoggerType, conf appC
 		articleRoutes.GET("/", handler.GetArticles)
 		articleRoutes.GET("/author/:author_id", handler.GetArticlesByAuthor)
 		articleRoutes.GET("/tag/:tag_name", handler.GetArticlesByTag)
-		articleRoutes.PUT("/", handler.UpdateArticle)
-		articleRoutes.DELETE("/:id", handler.DeleteArticle)
+		articleRoutes.PUT("/:article_id", handler.UpdateArticle)
+		articleRoutes.DELETE("/:article_id", handler.DeleteArticle)
 		articleRoutes.DELETE("/", handler.DeleteArticleAll)
 	}
 
