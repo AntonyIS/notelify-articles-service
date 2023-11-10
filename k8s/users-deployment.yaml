@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notelify-user
+  labels: 
+    app: notelify-user
+spec: 
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notelify-user
+  template:
+    metadata:
+      labels: 
+        app: notelify-user
+    spec:
+      containers:
+        - name : notelify-user
+          image: antonyinjila/notelify-users-service:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: AWS_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: notelify-secret
+                  key: aws_access_key
+            - name: AWS_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: notelify-secret
+                  key: aws_secret_key
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: notelify-secret
+                  key: secret_key
+            - name: AWS_DEFAULT_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: notelify-config
+                  key: aws_default_region
+            - name: DatabaseHost
+              valueFrom:
+                configMapKeyRef:
+                  name: notelify-config
+                  key: database_host
+            - name: RDSInstanceIdentifier
+              valueFrom:
+                configMapKeyRef:
+                  name: notelify-config
+                  key: rds_instance_identifier
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notelify-users-service
+spec:
+  type: ClusterIP
+  selector:
+    app: notelify-user
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+  
+
+
+

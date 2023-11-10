@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: notelify-config
+data:
+  aws_default_region: me-south-1
+  database_host: localhost
+  database_user: postgres
+  database_name: postgres
+  
