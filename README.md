@@ -5,7 +5,7 @@
 Article service is one of many service in the notelify application. It has all business logic for the articles logic. Exposes APIs that get consumed by other services
 Build using Go programming language, Postgres, Redis for data storage.
 The Article service makes use of the Hexagonal architecture for better code testing, easy code modification.
-├── notelify-articles-service
+```├── notelify-articles-service
 │   ├── config
 │   │   └── config.go
 │   ├── Dockerfile
@@ -38,6 +38,7 @@ The Article service makes use of the Hexagonal architecture for better code test
 │   ├── main.go
 │   ├── Makefile
 │   └── README.md
+```
 
 
 ## Table of content
