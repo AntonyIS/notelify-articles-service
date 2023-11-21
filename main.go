@@ -6,7 +6,7 @@ import (
 	"github.com/AntonyIS/notelify-articles-service/config"
 	"github.com/AntonyIS/notelify-articles-service/internal/adapters/app"
 	"github.com/AntonyIS/notelify-articles-service/internal/adapters/logger"
-	"github.com/AntonyIS/notelify-articles-service/internal/adapters/repository/postgres"
+	"github.com/AntonyIS/notelify-articles-service/internal/adapters/repository/dynamodb"
 	"github.com/AntonyIS/notelify-articles-service/internal/core/services"
 )
 
@@ -20,8 +20,7 @@ func init() {
 
 func main() {
 	/*
-	This is the microservice article service
-	
+		This is the microservice article service
 	*/
 	conf, err := config.NewConfig(env)
 	if err != nil {
@@ -30,13 +29,15 @@ func main() {
 	// Logger service
 	logger := logger.NewLoggerService(conf.LoggerURL)
 	// // Postgres Client
-	postgresDBRepo, err := postgres.NewPostgresClient(*conf, logger)
+	// postgresDBRepo, err := postgres.NewPostgresClient(*conf, logger)
+	// // Postgres Client
+	dynamoDBRepo, err := dynamodb.NewDynamoDBClient(*conf, logger)
 	if err != nil {
 		logger.PostLogMessage(err.Error())
 		panic(err)
 	} else {
 
-		contentSVC := services.NewArticleManagementService(postgresDBRepo)
+		contentSVC := services.NewArticleManagementService(dynamoDBRepo)
 		app.InitGinRoutes(contentSVC, logger, *conf)
 	}
 	logger.PostLogMessage(err.Error())
