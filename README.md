@@ -39,8 +39,6 @@ The Article service makes use of the Hexagonal architecture for better code test
 │   ├── Makefile
 │   └── README.md
 ```
-
-
 ## Table of content
 - [Installation](#installation)
 <!-- - [Usage](#usage)
