@@ -19,9 +19,6 @@ func init() {
 }
 
 func main() {
-	/*
-		This is the microservice article service
-	*/
 	conf, err := config.NewConfig(env)
 	if err != nil {
 		panic(err)
