@@ -25,7 +25,6 @@ type Config struct {
 	Testing               bool
 }
 
-
 func NewConfig(Env string) (*Config, error) {
 	if Env == "dev" {
 		err := godotenv.Load(".env")
@@ -38,7 +37,6 @@ func NewConfig(Env string) (*Config, error) {
 			return nil, err
 		}
 	}
-
 	var (
 		AWS_ACCESS_KEY        = os.Getenv("AWS_ACCESS_KEY")
 		AWS_SECRET_KEY        = os.Getenv("AWS_SECRET_KEY")
@@ -46,11 +44,11 @@ func NewConfig(Env string) (*Config, error) {
 		RDSInstanceIdentifier = os.Getenv("RDSInstanceIdentifier")
 		SECRET_KEY            = os.Getenv("SECRET_KEY")
 		LoggerURL             = os.Getenv("LoggerURL")
-		DatabaseUser          = os.Getenv("DatabaseUser")
-		DatabasePassword      = os.Getenv("DatabasePassword")
+		DatabaseUser          = os.Getenv("DATABASEUSER")
+		DatabasePassword      = os.Getenv("DATABASEPASSWORD")
+		DatabaseName          = os.Getenv("DATABASENAME")
 		Port                  = "8001"
 		ContentTable          = "Articles"
-		DatabaseName          = "postgres"
 		DatabasePort          = "5432"
 		DatabaseHost          = "localhost"
 		Testing               = false
@@ -75,12 +73,10 @@ func NewConfig(Env string) (*Config, error) {
 		Testing = true
 		Debugging = true
 		ContentTable = "TestArticles"
-		
 
 	case "dev":
 		Testing = true
 		Debugging = true
-
 	}
 
 	config := Config{

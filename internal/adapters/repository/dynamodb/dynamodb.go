@@ -6,7 +6,6 @@ import (
 	"log"
 
 	appConfig "github.com/AntonyIS/notelify-articles-service/config"
-	"github.com/AntonyIS/notelify-articles-service/internal/adapters/logger"
 	"github.com/AntonyIS/notelify-articles-service/internal/core/domain"
 	"github.com/AntonyIS/notelify-articles-service/internal/core/ports"
 	"github.com/aws/aws-sdk-go/aws"
@@ -22,7 +21,7 @@ type dynamodbClient struct {
 	tablename string
 }
 
-func NewDynamoDBClient(c appConfig.Config, logger logger.LoggerType) (ports.ArticleRepository, error) {
+func NewDynamoDBClient(c appConfig.Config, logger ports.Logger) (ports.ArticleRepository, error) {
 	// Create AWS credentials
 	creds := credentials.NewStaticCredentials(c.AWS_ACCESS_KEY, c.AWS_SECRET_KEY, "")
 
@@ -99,7 +98,7 @@ func (db dynamodbClient) GetArticlesByAuthor(author_id string) (*[]domain.Articl
 
 	authorArticles := []domain.Article{}
 	for _, article := range *articles {
-		if article.Author.ID == author_id {
+		if article.AuthorID == author_id {
 			authorArticles = append(authorArticles, article)
 		}
 	}
@@ -190,7 +189,7 @@ func (db dynamodbClient) GetArticles() (*[]domain.Article, error) {
 	return &articles, nil
 }
 
-func (db dynamodbClient) UpdateArticle(article *domain.Article) (*domain.Article, error) {
+func (db dynamodbClient) UpdateArticle(article_id string, article *domain.Article) (*domain.Article, error) {
 	entityParsed, err := dynamodbattribute.MarshalMap(article)
 	if err != nil {
 		return nil, err
@@ -264,7 +263,6 @@ func InitTables(c appConfig.Config, client dynamodb.DynamoDB) error {
 		WriteCapacityUnits: aws.Int64(5), // Adjust as needed
 	}
 
-
 	tableInput := &dynamodb.DescribeTableInput{
 		TableName: &c.ContentTable,
 	}
@@ -275,10 +273,10 @@ func InitTables(c appConfig.Config, client dynamodb.DynamoDB) error {
 		if _, ok := err.(*dynamodb.ResourceInUseException); !ok {
 			// Create the table input with the GSI
 			createTableInput := &dynamodb.CreateTableInput{
-				TableName:              aws.String(c.ContentTable),
-				KeySchema:              keySchema,
-				AttributeDefinitions:   attributeDefinitions,
-				ProvisionedThroughput:  provisionedThroughput,
+				TableName:             aws.String(c.ContentTable),
+				KeySchema:             keySchema,
+				AttributeDefinitions:  attributeDefinitions,
+				ProvisionedThroughput: provisionedThroughput,
 			}
 
 			// Create the DynamoDB table with the GSI

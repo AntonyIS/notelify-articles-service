@@ -55,8 +55,14 @@ func (h handler) GetArticleByID(ctx *gin.Context) {
 	id := ctx.Param("article_id")
 	article, err := h.svc.GetArticleByID(id)
 	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			ctx.JSON(http.StatusNotFound, gin.H{
+				"error": "Article not found",
+			})
+			return
+		}
 		ctx.JSON(http.StatusNotFound, gin.H{
-			"err": err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
@@ -68,7 +74,7 @@ func (h handler) GetArticles(ctx *gin.Context) {
 	articles, err := h.svc.GetArticles()
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
-			"err": err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
@@ -80,7 +86,7 @@ func (h handler) GetArticlesByAuthor(ctx *gin.Context) {
 	articles, err := h.svc.GetArticlesByAuthor(id)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
-			"err": err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
@@ -92,7 +98,7 @@ func (h handler) GetArticlesByTag(ctx *gin.Context) {
 	articles, err := h.svc.GetArticlesByTag(tag)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
-			"err": err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
@@ -101,13 +107,7 @@ func (h handler) GetArticlesByTag(ctx *gin.Context) {
 
 func (h handler) UpdateArticle(ctx *gin.Context) {
 	article_id := ctx.Param("article_id")
-	article, err := h.svc.GetArticleByID(article_id)
-	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{
-			"err": err.Error(),
-		})
-		return
-	}
+
 	var res *domain.Article
 	if err := ctx.ShouldBindJSON(&res); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -115,10 +115,11 @@ func (h handler) UpdateArticle(ctx *gin.Context) {
 		})
 		return
 	}
-	article, err = h.svc.UpdateArticle(res)
+	article, err := h.svc.UpdateArticle(article_id, res)
+
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
-			"err": err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
@@ -126,11 +127,19 @@ func (h handler) UpdateArticle(ctx *gin.Context) {
 }
 
 func (h handler) DeleteArticle(ctx *gin.Context) {
-	id := ctx.Param("id")
-	err := h.svc.DeleteArticle(id)
+	article_id := ctx.Param("article_id")
+	err := h.svc.DeleteArticle(article_id)
+
+	
 	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			ctx.JSON(http.StatusNotFound, gin.H{
+				"error": "Article not found",
+			})
+			return
+		}
 		ctx.JSON(http.StatusNotFound, gin.H{
-			"err": err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
@@ -138,10 +147,23 @@ func (h handler) DeleteArticle(ctx *gin.Context) {
 }
 
 func (h handler) DeleteArticleAll(ctx *gin.Context) {
-	err := h.svc.DeleteArticleAll()
+	articles, err := h.svc.GetArticles()
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
-			"err": err.Error(),
+			"error": err.Error(),
+		})
+		return
+	}
+	if len(*articles) == 0 {
+		ctx.JSON(http.StatusNotFound, gin.H{
+			"error": "No Articles to delete",
+		})
+		return
+	}
+	err = h.svc.DeleteArticleAll()
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{
+			"error": "Article not found",
 		})
 		return
 	}

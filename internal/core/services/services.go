@@ -59,8 +59,8 @@ func (svc *articleManagementService) GetArticles() (*[]domain.Article, error) {
 	return svc.repo.GetArticles()
 }
 
-func (svc *articleManagementService) UpdateArticle(article *domain.Article) (*domain.Article, error) {
-	return svc.repo.UpdateArticle(article)
+func (svc *articleManagementService) UpdateArticle(article_id string, article *domain.Article) (*domain.Article, error) {
+	return svc.repo.UpdateArticle(article_id,article)
 }
 
 func (svc *articleManagementService) DeleteArticle(article_id string) error {
