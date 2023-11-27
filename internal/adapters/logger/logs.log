@@ -1,2 +1,2 @@
-2023/11/27 08:51:43 Server running on port :8001
-2023/11/27 08:51:44 GET /v1/articles/ HTTP/1.1 200 826.091µs 127.0.0.1
+2023/11/27 09:36:10 Server running on port :8001
+2023/11/27 09:36:13 DELETE /v1/articles/ HTTP/1.1 404 1.76528ms 127.0.0.1

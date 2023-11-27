@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 
 	appConfig "github.com/AntonyIS/notelify-articles-service/config"
@@ -126,6 +127,9 @@ func (psql *postgresDBClient) CreateArticle(article *domain.Article) (*domain.Ar
 
 	if err != nil {
 		psql.loggerService.Error(err.Error())
+		if err.Error() == "sql: no rows in result set" {
+			return nil, errors.New("article not found")
+		}
 		return nil, err
 	}
 
@@ -137,7 +141,12 @@ func (psql *postgresDBClient) GetArticleByID(article_id string) (*domain.Article
 	article := &domain.Article{}
 	row := psql.db.QueryRow(query, article_id)
 	err := row.Scan(&article.ArticleID, &article.Title, &article.Subtitle, &article.Introduction, &article.Body, pq.Array(&article.Tags), &article.PublishDate, &article.AuthorID)
+
 	if err != nil {
+		psql.loggerService.Error(err.Error())
+		if err.Error() == "sql: no rows in result set" {
+			return nil, errors.New("article not found")
+		}
 		return nil, err
 	}
 	return article, nil
@@ -161,6 +170,7 @@ func (psql *postgresDBClient) GetArticlesByAuthor(author_id string) (*[]domain.A
 		psql.loggerService.Error(err.Error())
 		return nil, err
 	}
+
 	defer rows.Close()
 
 	articles := []domain.Article{}
@@ -319,8 +329,17 @@ func (psql *postgresDBClient) DeleteArticle(article_id string) error {
 }
 
 func (psql *postgresDBClient) DeleteArticleAll() error {
+	articles, err := psql.GetArticles()
+	if err != nil {
+		psql.loggerService.Error(err.Error())
+		return err
+	}
+	if len(*articles) == 0 {
+		return errors.New("no Articles to delete")
+	}
 	query := fmt.Sprintf(`DELETE FROM %s `, psql.tablename)
-	_, err := psql.db.Exec(query)
+	_, err = psql.db.Exec(query)
+
 	if err != nil {
 		psql.loggerService.Error(err.Error())
 		return err
