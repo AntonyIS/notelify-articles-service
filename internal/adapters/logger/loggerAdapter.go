@@ -12,21 +12,28 @@ type ConsoleFileLogger struct {
 }
 
 func NewLogger() ConsoleFileLogger {
-	path := "internal/adapters/logger/logs.log"
-	logFile, err := os.Create(path)
-	if err != nil {
-		log.Fatal("Error creating a file: ", err)
-	}
+    path := "internal/adapters/logger/logs.log"
 
-	// Create a multi-writer that writes to both os.Stdout and the log file
-	multiWriter := io.MultiWriter(os.Stdout, logFile)
+    // Create the directory structure if it doesn't exist
+    err := os.MkdirAll("internal/adapters/logger", os.ModePerm)
+    if err != nil {
+        log.Fatal("Error creating directory: ", err)
+    }
 
-	// Create a custom logger with a custom log.Formatter
-	logger := log.New(multiWriter, "", log.Ldate|log.Ltime)
+    logFile, err := os.Create(path)
+    if err != nil {
+        log.Fatal("Error creating a file: ", err)
+    }
 
-	return ConsoleFileLogger{logger: logger}
+    // Create a multi-writer that writes to both os.Stdout and the log file
+    multiWriter := io.MultiWriter(os.Stdout, logFile)
 
+    // Create a custom logger with a custom log.Formatter
+    logger := log.New(multiWriter, "", log.Ldate|log.Ltime)
+
+    return ConsoleFileLogger{logger: logger}
 }
+
 
 func (l *ConsoleFileLogger) Info(message string) {
 	l.logger.Println(message)

@@ -72,6 +72,7 @@ func (h handler) GetArticles(ctx *gin.Context) {
 		})
 		return
 	}
+
 	ctx.JSON(http.StatusOK, *response)
 }
 

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -44,13 +45,13 @@ func NewConfig(Env string) (*Config, error) {
 		RDSInstanceIdentifier = os.Getenv("RDSInstanceIdentifier")
 		SECRET_KEY            = os.Getenv("SECRET_KEY")
 		LoggerURL             = os.Getenv("LoggerURL")
-		DatabaseUser          = os.Getenv("DATABASEUSER")
-		DatabasePassword      = os.Getenv("DATABASEPASSWORD")
-		DatabaseName          = os.Getenv("DATABASENAME")
+		DatabaseUser          = os.Getenv("POSTGRES_USER")
+		DatabasePassword      = os.Getenv("POSTGRES_PASSWORD")
+		DatabaseName          = os.Getenv("POSTGRES_DB")
+		DatabaseHost          = os.Getenv("POSTGRES_HOST")
 		Port                  = "8001"
 		ContentTable          = "Articles"
 		DatabasePort          = "5432"
-		DatabaseHost          = "localhost"
 		Testing               = false
 		Debugging             = false
 	)
@@ -59,14 +60,10 @@ func NewConfig(Env string) (*Config, error) {
 	case "prod":
 		Testing = false
 		Debugging = false
-		DatabaseHost = os.Getenv("DatabaseHost")
-		DatabaseName = "notlify_db_init"
 
 	case "test_prod":
 		Testing = true
 		Debugging = true
-		DatabaseHost = os.Getenv("DatabaseHost")
-		DatabaseName = "notlify_db_init"
 		ContentTable = "TestArticles"
 
 	case "test":
@@ -77,6 +74,13 @@ func NewConfig(Env string) (*Config, error) {
 	case "dev":
 		Testing = true
 		Debugging = true
+		DatabaseHost = "localhost"
+		ContentTable = "DevArticles"
+
+	case "docker_test":
+		Testing = true
+		Debugging = true
+		ContentTable = "DockerArticles"
 	}
 
 	config := Config{
@@ -97,6 +101,6 @@ func NewConfig(Env string) (*Config, error) {
 		DatabasePort:          DatabasePort,
 		DatabasePassword:      DatabasePassword,
 	}
-
+	fmt.Println(config)
 	return &config, nil
 }

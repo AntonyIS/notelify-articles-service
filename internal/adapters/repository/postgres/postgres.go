@@ -8,9 +8,6 @@ import (
 	appConfig "github.com/AntonyIS/notelify-articles-service/config"
 	"github.com/AntonyIS/notelify-articles-service/internal/core/domain"
 	"github.com/AntonyIS/notelify-articles-service/internal/core/ports"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 )
@@ -28,36 +25,8 @@ func NewPostgresClient(appConfig appConfig.Config, logger ports.Logger) (*postgr
 	password := appConfig.DatabasePassword
 	port := appConfig.DatabasePort
 	host := appConfig.DatabaseHost
-	region := appConfig.AWS_DEFAULT_REGION
-	rdsInstanceIdentifier := appConfig.RDSInstanceIdentifier
-	var dsn string
 
-	if appConfig.Env == "dev" || appConfig.Env == "test" {
-		dsn = fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable", host, port, user, dbname, password)
-
-	}
-
-	if appConfig.Env == "prod" || appConfig.Env == "test_prod" {
-		awsSession := session.Must(session.NewSession(&aws.Config{
-			Region: aws.String(region),
-		}))
-		rdsClient := rds.New(awsSession)
-
-		describeInput := &rds.DescribeDBInstancesInput{
-			DBInstanceIdentifier: &rdsInstanceIdentifier,
-		}
-
-		describeOutput, err := rdsClient.DescribeDBInstances(describeInput)
-		if err != nil {
-			logger.Error(fmt.Sprintf("Failed to describe DB instance: %s", err.Error()))
-		}
-
-		if len(describeOutput.DBInstances) == 0 {
-			logger.Error("DB instance not found")
-		}
-
-		dsn = fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=require", host, port, dbname, user, password)
-	}
+	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable", host, port, user, dbname, password)
 
 	db, err := sql.Open("postgres", dsn)
 
