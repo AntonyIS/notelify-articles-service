@@ -19,9 +19,9 @@ import (
 )
 
 func TestApplicationService(t *testing.T) {
-	env := "prod"
+	// env := "prod"
 	// Read application environment and load configurations
-	conf, err := config.NewConfig(env)
+	conf, err := config.NewConfig()
 	if err != nil {
 		panic(err)
 	}

@@ -1,14 +1,8 @@
 build:
 	go build -o bin/notelify-articles-service
-serve-prod: build
-	./bin/notelify-articles-service -env=prod
-
-serve-dev: build
-	./bin/notelify-articles-service -env=dev
-
-serve-docker: build
-	./bin/notelify-articles-service -env=docker_test
-
+	
+serve: build
+	./bin/notelify-articles-service
 
 test:
 	go test -v -tags=myenv ./...

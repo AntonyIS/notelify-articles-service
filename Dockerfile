@@ -30,10 +30,10 @@ WORKDIR /root/
 
 # Copy the Pre-built binary file from the previous stage. Observe we also copied the .env file
 COPY --from=builder /app/src .
-# COPY --from=builder /app/.env .
+COPY --from=builder /app/.env .
 
 # Expose port 8080 to the outside world
 EXPOSE 8001
 
 # Command to run the executable
-CMD ["./src", "-env=docker_test"]
+CMD ["./src"]

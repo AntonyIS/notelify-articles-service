@@ -1,106 +1,102 @@
 package config
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	Env                   string
-	Port                  string
-	ContentTable          string
-	AWS_ACCESS_KEY        string
-	AWS_SECRET_KEY        string
-	AWS_DEFAULT_REGION    string
-	RDSInstanceIdentifier string
-	LoggerURL             string
-	SECRET_KEY            string
-	DatabaseName          string
-	DatabaseUser          string
-	DatabaseHost          string
-	DatabasePort          string
-	DatabasePassword      string
-	Debugging             bool
-	Testing               bool
+	ENV               string
+	SERVER_PORT       string
+	ARTICLE_TABLE     string
+	LOGGER_URL        string
+	SECRET_KEY        string
+	POSTGRES_DB       string
+	POSTGRES_USER     string
+	POSTGRES_HOST     string
+	POSTGRES_PORT     string
+	POSTGRES_PASSWORD string
+	DEBUG             bool
+	TEST              bool
 }
 
-func NewConfig(Env string) (*Config, error) {
-	if Env == "dev" {
-		err := godotenv.Load(".env")
-		if err != nil {
-			return nil, err
-		}
-	} else if Env == "test" {
+func NewConfig() (*Config, error) {
+	ENV := os.Getenv("ENV")
+
+	if ENV == "test" {
 		err := godotenv.Load("../../../.env")
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		err := godotenv.Load(".env")
+		if err != nil {
+			return nil, err
+		}
+		ENV = os.Getenv("ENV")
 	}
+
 	var (
-		AWS_ACCESS_KEY        = os.Getenv("AWS_ACCESS_KEY")
-		AWS_SECRET_KEY        = os.Getenv("AWS_SECRET_KEY")
-		AWS_DEFAULT_REGION    = os.Getenv("AWS_DEFAULT_REGION")
-		RDSInstanceIdentifier = os.Getenv("RDSInstanceIdentifier")
-		SECRET_KEY            = os.Getenv("SECRET_KEY")
-		LoggerURL             = os.Getenv("LoggerURL")
-		DatabaseUser          = os.Getenv("POSTGRES_USER")
-		DatabasePassword      = os.Getenv("POSTGRES_PASSWORD")
-		DatabaseName          = os.Getenv("POSTGRES_DB")
-		DatabaseHost          = os.Getenv("POSTGRES_HOST")
-		Port                  = "8001"
-		ContentTable          = "Articles"
-		DatabasePort          = "5432"
-		Testing               = false
-		Debugging             = false
+		SECRET_KEY        = os.Getenv("SECRET_KEY")
+		POSTGRES_PASSWORD = os.Getenv("POSTGRES_PASSWORD")
+		POSTGRES_USER     = "postgres"
+		POSTGRES_DB       = "postgres"
+		POSTGRES_HOST     = "postgres"
+		POSTGRES_PORT     = "5432"
+		SERVER_PORT       = "8001"
+		ARTICLE_TABLE     = "Articles"
+		LOGGER_URL        = "http://logger:8002/articles/"
+		DEBUG             = false
+		TEST              = false
 	)
 
-	switch Env {
-	case "prod":
-		Testing = false
-		Debugging = false
+	switch ENV {
+	case "production":
+		TEST = false
+		DEBUG = false
 
-	case "test_prod":
-		Testing = true
-		Debugging = true
-		ContentTable = "TestArticles"
+	case "production_test":
+		TEST = true
+		DEBUG = true
+		ARTICLE_TABLE = "TestArticles"
 
-	case "test":
-		Testing = true
-		Debugging = true
-		ContentTable = "TestArticles"
+	case "developement_test":
+		TEST = true
+		DEBUG = true
+		ARTICLE_TABLE = "TestArticles"
 
-	case "dev":
-		Testing = true
-		Debugging = true
-		DatabaseHost = "localhost"
-		ContentTable = "DevArticles"
+	case "development":
+		TEST = true
+		DEBUG = true
+		POSTGRES_HOST = "localhost"
+		ARTICLE_TABLE = "DevArticles"
+
+	case "docker":
+		TEST = true
+		DEBUG = true
+		ARTICLE_TABLE = "DockerArticles"
 
 	case "docker_test":
-		Testing = true
-		Debugging = true
-		ContentTable = "DockerArticles"
+		TEST = true
+		DEBUG = true
+		ARTICLE_TABLE = "DockerArticles"
 	}
 
 	config := Config{
-		Env:                   Env,
-		Port:                  Port,
-		ContentTable:          ContentTable,
-		AWS_ACCESS_KEY:        AWS_ACCESS_KEY,
-		AWS_SECRET_KEY:        AWS_SECRET_KEY,
-		RDSInstanceIdentifier: RDSInstanceIdentifier,
-		SECRET_KEY:            SECRET_KEY,
-		AWS_DEFAULT_REGION:    AWS_DEFAULT_REGION,
-		LoggerURL:             LoggerURL,
-		Debugging:             Debugging,
-		Testing:               Testing,
-		DatabaseName:          DatabaseName,
-		DatabaseUser:          DatabaseUser,
-		DatabaseHost:          DatabaseHost,
-		DatabasePort:          DatabasePort,
-		DatabasePassword:      DatabasePassword,
+		ENV:               ENV,
+		SERVER_PORT:       SERVER_PORT,
+		ARTICLE_TABLE:     ARTICLE_TABLE,
+		SECRET_KEY:        SECRET_KEY,
+		LOGGER_URL:        LOGGER_URL,
+		DEBUG:             DEBUG,
+		TEST:              TEST,
+		POSTGRES_DB:       POSTGRES_DB,
+		POSTGRES_USER:     POSTGRES_USER,
+		POSTGRES_HOST:     POSTGRES_HOST,
+		POSTGRES_PORT:     POSTGRES_PORT,
+		POSTGRES_PASSWORD: POSTGRES_PASSWORD,
 	}
-	fmt.Println(config)
+
 	return &config, nil
 }

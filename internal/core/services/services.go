@@ -1,7 +1,6 @@
 package services
 
 import (
-	"fmt"
 	"sort"
 	"strings"
 	"time"
@@ -25,6 +24,7 @@ func NewArticleManagementService(repo ports.ArticleRepository) *articleManagemen
 func (svc *articleManagementService) CreateArticle(article *domain.Article) (*domain.Article, error) {
 	article.ArticleID = uuid.New().String()
 	article.PublishDate = time.Now()
+	article.AuthorID = "c1a95ff5-d536-498f-aabd-78388707bae3"
 	return svc.repo.CreateArticle(article)
 }
 
@@ -49,7 +49,7 @@ func (svc *articleManagementService) GetArticlesByTag(tag string) (*[]domain.Art
 		index := sort.SearchStrings(arr, tag)
 		if index < len(arr) && (arr[index] == tag || arr[index] == strings.ToLower(tag) || arr[index] == strings.ToUpper(tag)) {
 			articleArray = append(articleArray, article)
-			fmt.Println(arr, index, tag)
+
 		}
 	}
 	return &articleArray, nil
@@ -60,7 +60,7 @@ func (svc *articleManagementService) GetArticles() (*[]domain.Article, error) {
 }
 
 func (svc *articleManagementService) UpdateArticle(article_id string, article *domain.Article) (*domain.Article, error) {
-	return svc.repo.UpdateArticle(article_id,article)
+	return svc.repo.UpdateArticle(article_id, article)
 }
 
 func (svc *articleManagementService) DeleteArticle(article_id string) error {

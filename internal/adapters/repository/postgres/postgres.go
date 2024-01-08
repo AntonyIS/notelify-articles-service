@@ -19,15 +19,15 @@ type postgresDBClient struct {
 }
 
 func NewPostgresClient(appConfig appConfig.Config, logger ports.Logger) (*postgresDBClient, error) {
-	dbname := appConfig.DatabaseName
-	tablename := appConfig.ContentTable
-	user := appConfig.DatabaseUser
-	password := appConfig.DatabasePassword
-	port := appConfig.DatabasePort
-	host := appConfig.DatabaseHost
+	dbname := appConfig.POSTGRES_DB
+	tablename := appConfig.ARTICLE_TABLE
+	user := appConfig.POSTGRES_USER
+	password := appConfig.POSTGRES_PASSWORD
+	port := appConfig.POSTGRES_PORT
+	host := appConfig.POSTGRES_HOST
 
 	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable", host, port, user, dbname, password)
-
+	
 	db, err := sql.Open("postgres", dsn)
 
 	if err != nil {
