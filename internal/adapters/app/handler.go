@@ -38,7 +38,7 @@ func InitGinRoutes(svc ports.ArticleService, logger ports.Logger, conf appConfig
 	}
 
 	logger.Info(fmt.Sprintf("Server running on port 0.0.0.0:%s", conf.SERVER_PORT))
-	router.Run(fmt.Sprintf("0.0.0.0:%s", conf.SERVER_PORT))
+	router.Run(fmt.Sprintf(":%s", conf.SERVER_PORT))
 }
 
 func ginRequestLogger(logger ports.Logger) gin.HandlerFunc {

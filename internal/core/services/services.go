@@ -24,7 +24,6 @@ func NewArticleManagementService(repo ports.ArticleRepository) *articleManagemen
 func (svc *articleManagementService) CreateArticle(article *domain.Article) (*domain.Article, error) {
 	article.ArticleID = uuid.New().String()
 	article.PublishDate = time.Now()
-	article.AuthorID = "c1a95ff5-d536-498f-aabd-78388707bae3"
 	return svc.repo.CreateArticle(article)
 }
 

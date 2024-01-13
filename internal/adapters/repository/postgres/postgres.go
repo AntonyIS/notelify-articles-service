@@ -154,7 +154,7 @@ func (psql *postgresDBClient) GetArticlesByAuthor(author_id string) (*[]domain.A
 			&article.Body,
 			pq.Array(&article.Tags),
 			&article.PublishDate,
-			&article.ArticleID,
+			&article.AuthorID,
 		)
 		if err != nil {
 			psql.loggerService.Error(err.Error())
