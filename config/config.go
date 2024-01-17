@@ -76,7 +76,7 @@ func NewConfig() (*Config, error) {
 		TEST = true
 		DEBUG = true
 		ARTICLE_TABLE = "DockerArticles"
-		LOGGER_URL = "/v1/logger/"
+		LOGGER_URL = "http://logger:8003/v1/logger"
 
 	case "docker_test":
 		TEST = true
