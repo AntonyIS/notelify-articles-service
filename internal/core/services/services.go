@@ -11,12 +11,14 @@ import (
 )
 
 type articleManagementService struct {
-	repo ports.ArticleRepository
+	repo   ports.ArticleRepository
+	logger ports.LoggingService
 }
 
-func NewArticleManagementService(repo ports.ArticleRepository) *articleManagementService {
+func NewArticleManagementService(repo ports.ArticleRepository, logger ports.LoggingService) *articleManagementService {
 	svc := articleManagementService{
-		repo: repo,
+		repo:   repo,
+		logger: logger,
 	}
 	return &svc
 }
@@ -24,20 +26,56 @@ func NewArticleManagementService(repo ports.ArticleRepository) *articleManagemen
 func (svc *articleManagementService) CreateArticle(article *domain.Article) (*domain.Article, error) {
 	article.ArticleID = uuid.New().String()
 	article.PublishDate = time.Now()
-	return svc.repo.CreateArticle(article)
+	article, err := svc.repo.CreateArticle(article)
+	if err != nil {
+		logEntry := domain.LogMessage{
+			LogLevel: "critical",
+			Service:  "articles",
+			Message:  err.Error(),
+		}
+		svc.logger.CreateLog(logEntry)
+		return nil, err
+	}
+	return article, nil
 }
 
 func (svc *articleManagementService) GetArticleByID(article_id string) (*domain.Article, error) {
-	return svc.repo.GetArticleByID(article_id)
+	article, err := svc.repo.GetArticleByID(article_id)
+	if err != nil {
+		logEntry := domain.LogMessage{
+			LogLevel: "critical",
+			Service:  "articles",
+			Message:  err.Error(),
+		}
+		svc.logger.CreateLog(logEntry)
+		return nil, err
+	}
+	return article, nil
 }
 
 func (svc *articleManagementService) GetArticlesByAuthor(author_id string) (*[]domain.Article, error) {
-	return svc.repo.GetArticlesByAuthor(author_id)
+	articles, err := svc.repo.GetArticlesByAuthor(author_id)
+	if err != nil {
+		logEntry := domain.LogMessage{
+			LogLevel: "critical",
+			Service:  "articles",
+			Message:  err.Error(),
+		}
+		svc.logger.CreateLog(logEntry)
+		return nil, err
+	}
+	return articles, nil
 }
 
 func (svc *articleManagementService) GetArticlesByTag(tag string) (*[]domain.Article, error) {
 	articles, err := svc.GetArticles()
 	if err != nil {
+		logEntry := domain.LogMessage{
+			LogLevel: "critical",
+			Service:  "articles",
+			Message:  err.Error(),
+		}
+		svc.logger.CreateLog(logEntry)
 		return nil, err
 	}
 	articleArray := []domain.Article{}
@@ -55,17 +93,58 @@ func (svc *articleManagementService) GetArticlesByTag(tag string) (*[]domain.Art
 }
 
 func (svc *articleManagementService) GetArticles() (*[]domain.Article, error) {
-	return svc.repo.GetArticles()
+	artciles, err := svc.repo.GetArticles()
+	if err != nil {
+		logEntry := domain.LogMessage{
+			LogLevel: "critical",
+			Service:  "articles",
+			Message:  err.Error(),
+		}
+		svc.logger.CreateLog(logEntry)
+		return nil, err
+	}
+
+	return artciles, nil
 }
 
 func (svc *articleManagementService) UpdateArticle(article_id string, article *domain.Article) (*domain.Article, error) {
-	return svc.repo.UpdateArticle(article_id, article)
+	article, err := svc.repo.UpdateArticle(article_id, article)
+	if err != nil {
+		logEntry := domain.LogMessage{
+			LogLevel: "critical",
+			Service:  "articles",
+			Message:  err.Error(),
+		}
+		svc.logger.CreateLog(logEntry)
+		return nil, err
+	}
+	return article, nil
 }
 
 func (svc *articleManagementService) DeleteArticle(article_id string) error {
-	return svc.repo.DeleteArticle(article_id)
+	err := svc.repo.DeleteArticle(article_id)
+	if err != nil {
+		logEntry := domain.LogMessage{
+			LogLevel: "critical",
+			Service:  "articles",
+			Message:  err.Error(),
+		}
+		svc.logger.CreateLog(logEntry)
+		return err
+	}
+	return nil
 }
 
 func (svc *articleManagementService) DeleteArticleAll() error {
-	return svc.repo.DeleteArticleAll()
+	err := svc.repo.DeleteArticleAll()
+	if err != nil {
+		logEntry := domain.LogMessage{
+			LogLevel: "critical",
+			Service:  "articles",
+			Message:  err.Error(),
+		}
+		svc.logger.CreateLog(logEntry)
+		return err
+	}
+	return nil
 }

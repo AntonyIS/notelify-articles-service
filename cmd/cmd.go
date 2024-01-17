@@ -33,8 +33,10 @@ func RunService() {
 		loggerSvc.Error(err.Error())
 		panic(err)
 	}
+
+	newLoggerService := services.NewLoggingService(conf.LOGGER_URL)
 	// Initialize the article service
-	articleService := services.NewArticleManagementService(databaseRepo)
+	articleService := services.NewArticleManagementService(databaseRepo, newLoggerService)
 	// Run HTTP Server
 	app.InitGinRoutes(articleService, loggerSvc, *conf)
 	loggerSvc.Close()

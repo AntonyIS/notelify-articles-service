@@ -35,7 +35,8 @@ func TestApplicationService(t *testing.T) {
 		loggerSvc.Error(err.Error())
 		panic(err)
 	}
-	articleService := NewArticleManagementService(databaseRepo)
+	newLoggerService := NewLoggingService(conf.LOGGER_URL)
+	articleService := NewArticleManagementService(databaseRepo, newLoggerService)
 	app.InitGinRoutes(articleService, loggerSvc, *conf)
 	author := domain.Author{
 		AuthorID:         "b967127d-7535-420c-96a7-1d01b437a619",
@@ -253,5 +254,5 @@ func TestApplicationService(t *testing.T) {
 		}
 	})
 
-	 loggerSvc.Close()
+	loggerSvc.Close()
 }

@@ -26,3 +26,10 @@ type Author struct {
 	Following        int      `json:"following"`
 	Followers        int      `json:"followers"`
 }
+
+
+type LogMessage struct {
+	LogLevel string `json:"log_level"`
+	Message  string `json:"message"`
+	Service  string `json:"service"`
+}
