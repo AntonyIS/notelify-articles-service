@@ -5,8 +5,8 @@ import (
 
 	"github.com/AntonyIS/notelify-articles-service/config"
 	"github.com/AntonyIS/notelify-articles-service/internal/adapters/app"
-	"github.com/AntonyIS/notelify-articles-service/internal/adapters/logger"
 	"github.com/AntonyIS/notelify-articles-service/internal/adapters/repository/postgres"
+	"github.com/AntonyIS/notelify-articles-service/internal/core/domain"
 	"github.com/AntonyIS/notelify-articles-service/internal/core/services"
 )
 
@@ -23,21 +23,21 @@ func RunService() {
 	if err != nil {
 		panic(err)
 	}
-	// Initialise console and file logger
-	consoleFileLogger := logger.NewLogger()
-	// Initialize the logging service
-	loggerSvc := services.NewLoggerService(&consoleFileLogger)
-	// // Postgres Clien
-	databaseRepo, err := postgres.NewPostgresClient(*conf, loggerSvc)
+	newLoggerService := services.NewLoggingManagementService(conf.LOGGER_URL)
+
+	databaseRepo, err := postgres.NewPostgresClient(*conf)
 	if err != nil {
-		loggerSvc.Error(err.Error())
+		logEntry := domain.LogMessage{
+			LogLevel: "ERROR",
+			Service:  "users",
+			Message:  err.Error(),
+		}
+		newLoggerService.LogError(logEntry)
 		panic(err)
 	}
 
-	newLoggerService := services.NewLoggingService(conf.LOGGER_URL)
-	// Initialize the article service
 	articleService := services.NewArticleManagementService(databaseRepo, newLoggerService)
 	// Run HTTP Server
-	app.InitGinRoutes(articleService, loggerSvc, *conf)
-	loggerSvc.Close()
+	app.InitGinRoutes(articleService, newLoggerService, *conf)
+
 }

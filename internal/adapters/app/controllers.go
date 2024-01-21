@@ -22,12 +22,14 @@ type GinHandler interface {
 type handler struct {
 	svc       ports.ArticleService
 	secretKey string
+	logger    ports.LoggingService
 }
 
-func NewGinHandler(svc ports.ArticleService, secretKey string) GinHandler {
+func NewGinHandler(svc ports.ArticleService, secretKey string, logger ports.LoggingService) GinHandler {
 	routerHandler := handler{
 		svc:       svc,
 		secretKey: secretKey,
+		logger:    logger,
 	}
 	return routerHandler
 }
@@ -52,15 +54,14 @@ func (h handler) CreateArticle(ctx *gin.Context) {
 }
 
 func (h handler) GetArticleByID(ctx *gin.Context) {
-	id := ctx.Param("article_id")
-	response, err := h.svc.GetArticleByID(id)
+	article_id := ctx.Param("article_id")
+	response, err := h.svc.GetArticleByID(article_id)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
-
 	ctx.JSON(http.StatusOK, response)
 }
 
@@ -72,7 +73,6 @@ func (h handler) GetArticles(ctx *gin.Context) {
 		})
 		return
 	}
-
 	ctx.JSON(http.StatusOK, *response)
 }
 
@@ -142,5 +142,6 @@ func (h handler) DeleteArticleAll(ctx *gin.Context) {
 		})
 		return
 	}
+
 	ctx.JSON(http.StatusOK, gin.H{"message": "Article deleted successfully"})
 }

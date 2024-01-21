@@ -7,38 +7,34 @@ import (
 
 	appConfig "github.com/AntonyIS/notelify-articles-service/config"
 	"github.com/AntonyIS/notelify-articles-service/internal/core/domain"
-	"github.com/AntonyIS/notelify-articles-service/internal/core/ports"
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 )
 
 type postgresDBClient struct {
-	db            *sql.DB
-	tablename     string
-	loggerService ports.Logger
+	db        *sql.DB
+	tablename string
 }
 
-func NewPostgresClient(appConfig appConfig.Config, logger ports.Logger) (*postgresDBClient, error) {
-	dbname := appConfig.POSTGRES_DB
-	tablename := appConfig.ARTICLE_TABLE
-	user := appConfig.POSTGRES_USER
-	password := appConfig.POSTGRES_PASSWORD
-	port := appConfig.POSTGRES_PORT
-	host := appConfig.POSTGRES_HOST
+func NewPostgresClient(conf appConfig.Config) (*postgresDBClient, error) {
+	dbname := conf.POSTGRES_DB
+	tablename := conf.ARTICLE_TABLE
+	user := conf.POSTGRES_USER
+	password := conf.POSTGRES_PASSWORD
+	port := conf.POSTGRES_PORT
+	host := conf.POSTGRES_HOST
 
 	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable", host, port, user, dbname, password)
-	
+
 	db, err := sql.Open("postgres", dsn)
 
 	if err != nil {
-		logger.Error(err.Error())
 		return nil, err
 	}
 
 	err = db.Ping()
 
 	if err != nil {
-		logger.Error(err.Error())
 		return nil, err
 	}
 	queryString := fmt.Sprintf(`
@@ -60,12 +56,10 @@ func NewPostgresClient(appConfig appConfig.Config, logger ports.Logger) (*postgr
 	}
 
 	if err != nil {
-		logger.Error(err.Error())
 		return nil, err
-
 	}
 
-	return &postgresDBClient{db: db, tablename: tablename, loggerService: logger}, nil
+	return &postgresDBClient{db: db, tablename: tablename}, nil
 }
 
 func (psql *postgresDBClient) CreateArticle(article *domain.Article) (*domain.Article, error) {
@@ -95,10 +89,6 @@ func (psql *postgresDBClient) CreateArticle(article *domain.Article) (*domain.Ar
 	)
 
 	if err != nil {
-		psql.loggerService.Error(err.Error())
-		if err.Error() == "sql: no rows in result set" {
-			return nil, errors.New("article not found")
-		}
 		return nil, err
 	}
 
@@ -112,10 +102,6 @@ func (psql *postgresDBClient) GetArticleByID(article_id string) (*domain.Article
 	err := row.Scan(&article.ArticleID, &article.Title, &article.Subtitle, &article.Introduction, &article.Body, pq.Array(&article.Tags), &article.PublishDate, &article.AuthorID)
 
 	if err != nil {
-		psql.loggerService.Error(err.Error())
-		if err.Error() == "sql: no rows in result set" {
-			return nil, errors.New("article not found")
-		}
 		return nil, err
 	}
 	return article, nil
@@ -136,7 +122,6 @@ func (psql *postgresDBClient) GetArticlesByAuthor(author_id string) (*[]domain.A
 	rows, err := psql.db.Query(query, author_id)
 
 	if err != nil {
-		psql.loggerService.Error(err.Error())
 		return nil, err
 	}
 
@@ -157,7 +142,6 @@ func (psql *postgresDBClient) GetArticlesByAuthor(author_id string) (*[]domain.A
 			&article.AuthorID,
 		)
 		if err != nil {
-			psql.loggerService.Error(err.Error())
 			return nil, err
 		}
 		articles = append(articles, article)
@@ -181,7 +165,6 @@ func (psql *postgresDBClient) GetArticlesByTag(tag string) (*[]domain.Article, e
 	rows, err := psql.db.Query(query, tag)
 
 	if err != nil {
-		psql.loggerService.Error(err.Error())
 		return nil, err
 	}
 	defer rows.Close()
@@ -201,7 +184,6 @@ func (psql *postgresDBClient) GetArticlesByTag(tag string) (*[]domain.Article, e
 			&article.AuthorID,
 		)
 		if err != nil {
-			psql.loggerService.Error(err.Error())
 			return nil, err
 		}
 		articles = append(articles, article)
@@ -225,7 +207,6 @@ func (psql *postgresDBClient) GetArticles() (*[]domain.Article, error) {
 
 	rows, err := psql.db.Query(query)
 	if err != nil {
-		psql.loggerService.Error(err.Error())
 		return nil, err
 	}
 	defer rows.Close()
@@ -243,7 +224,6 @@ func (psql *postgresDBClient) GetArticles() (*[]domain.Article, error) {
 			&article.AuthorID,
 		)
 		if err != nil {
-			psql.loggerService.Error(err.Error())
 			return nil, err
 		}
 		articles = append(articles, article)
@@ -256,7 +236,6 @@ func (psql *postgresDBClient) UpdateArticle(article_id string, article *domain.A
 	DBArticle, err := psql.GetArticleByID(article_id)
 
 	if err != nil {
-		psql.loggerService.Error(err.Error())
 		return nil, err
 	}
 
@@ -273,7 +252,6 @@ func (psql *postgresDBClient) UpdateArticle(article_id string, article *domain.A
 	_, err = psql.db.Exec(query, DBArticle.Title, DBArticle.Subtitle, DBArticle.Introduction, DBArticle.Body, pq.Array(DBArticle.Tags), DBArticle.PublishDate, DBArticle.AuthorID, DBArticle.ArticleID)
 
 	if err != nil {
-		psql.loggerService.Error(err.Error())
 		return nil, err
 	}
 
@@ -284,14 +262,12 @@ func (psql *postgresDBClient) DeleteArticle(article_id string) error {
 	_, err := psql.GetArticleByID(article_id)
 
 	if err != nil {
-		psql.loggerService.Error(err.Error())
 		return err
 	}
 	query := fmt.Sprintf(`DELETE FROM %s WHERE article_id = $1`, psql.tablename)
 
 	_, err = psql.db.Exec(query, article_id)
 	if err != nil {
-		psql.loggerService.Error(err.Error())
 		return err
 	}
 	return nil
@@ -300,7 +276,6 @@ func (psql *postgresDBClient) DeleteArticle(article_id string) error {
 func (psql *postgresDBClient) DeleteArticleAll() error {
 	articles, err := psql.GetArticles()
 	if err != nil {
-		psql.loggerService.Error(err.Error())
 		return err
 	}
 	if len(*articles) == 0 {
@@ -310,7 +285,6 @@ func (psql *postgresDBClient) DeleteArticleAll() error {
 	_, err = psql.db.Exec(query)
 
 	if err != nil {
-		psql.loggerService.Error(err.Error())
 		return err
 	}
 	return nil

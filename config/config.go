@@ -46,7 +46,7 @@ func NewConfig() (*Config, error) {
 		POSTGRES_PORT     = "5432"
 		SERVER_PORT       = "8001"
 		ARTICLE_TABLE     = "Articles"
-		LOGGER_URL        = "http://localhost:8003/v1/logger"
+		LOGGER_URL        = "http://localhost:8002/v1/logger"
 		DEBUG             = false
 		TEST              = false
 	)
@@ -76,7 +76,7 @@ func NewConfig() (*Config, error) {
 		TEST = true
 		DEBUG = true
 		ARTICLE_TABLE = "DockerArticles"
-		LOGGER_URL = "http://logger:8003/v1/logger"
+		LOGGER_URL = "http://logger:8002/v1/logger"
 
 	case "docker_test":
 		TEST = true

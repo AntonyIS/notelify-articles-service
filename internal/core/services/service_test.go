@@ -13,7 +13,6 @@ import (
 
 	"github.com/AntonyIS/notelify-articles-service/config"
 	"github.com/AntonyIS/notelify-articles-service/internal/adapters/app"
-	"github.com/AntonyIS/notelify-articles-service/internal/adapters/logger"
 	"github.com/AntonyIS/notelify-articles-service/internal/adapters/repository/postgres"
 	"github.com/AntonyIS/notelify-articles-service/internal/core/domain"
 )
@@ -25,18 +24,21 @@ func TestApplicationService(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	// Initialise console and file logger
-	consoleFileLogger := logger.NewLogger()
+
 	// Initialize the logging service
-	loggerSvc := NewLoggerService(&consoleFileLogger)
+	loggerSvc := NewLoggingManagementService(conf.LOGGER_URL)
 	// // Postgres Clien
-	databaseRepo, err := postgres.NewPostgresClient(*conf, loggerSvc)
+	databaseRepo, err := postgres.NewPostgresClient(*conf)
 	if err != nil {
-		loggerSvc.Error(err.Error())
+		logEntry := domain.LogMessage{
+			LogLevel: "ERROR",
+			Service:  "articles",
+			Message:  err.Error(),
+		}
+		loggerSvc.LogError(logEntry)
 		panic(err)
 	}
-	newLoggerService := NewLoggingService(conf.LOGGER_URL)
-	articleService := NewArticleManagementService(databaseRepo, newLoggerService)
+	articleService := NewArticleManagementService(databaseRepo, loggerSvc)
 	app.InitGinRoutes(articleService, loggerSvc, *conf)
 	author := domain.Author{
 		AuthorID:         "b967127d-7535-420c-96a7-1d01b437a619",
@@ -170,6 +172,7 @@ func TestApplicationService(t *testing.T) {
 	})
 
 	t.Run("Test update article", func(t *testing.T) {
+
 		title := "Article - Create article"
 		body := "Article body"
 		tags := []string{"Golang"}
@@ -254,5 +257,4 @@ func TestApplicationService(t *testing.T) {
 		}
 	})
 
-	loggerSvc.Close()
 }
