@@ -1,10 +1,11 @@
+package services
+
 /*
 	Filename : services_test.go
 	Description: This file contains tests for the application services
 	Author: Antony Injila
 	Date : September 13, 2023
 */
-package services
 
 import (
 	"fmt"
@@ -12,46 +13,64 @@ import (
 	"testing"
 
 	"github.com/AntonyIS/notelify-articles-service/config"
-	"github.com/AntonyIS/notelify-articles-service/internal/adapters/logger"
+	"github.com/AntonyIS/notelify-articles-service/internal/adapters/app"
 	"github.com/AntonyIS/notelify-articles-service/internal/adapters/repository/postgres"
 	"github.com/AntonyIS/notelify-articles-service/internal/core/domain"
 )
 
 func TestApplicationService(t *testing.T) {
-	env := "prod"
-	conf, err := config.NewConfig(env)
+	fmt.Println("START TESTING")
+	// Read application environment and load configurations
+	conf, err := config.NewConfig()
 	if err != nil {
 		panic(err)
 	}
 
-	// Logger service
-	logger := logger.NewLoggerService(conf.LoggerURL)
-	// // Postgres Client
-	postgresDBRepo, err := postgres.NewPostgresClient(*conf, logger)
-	articleService := NewArticleManagementService(postgresDBRepo)
-
-	author := domain.AuthorInfo{
-		ID:             "b967127d-7535-420c-96a7-1d01b437a619",
-		Name:           "Antony Injila",
-		Bio:            "About Antony Injila",
-		ProfilePicture: "",
-		SocialLinks:    []string{"https://github.com/AntonyIS", "https://medium.com/@antonyshikubu"},
-		Following:      100,
-		Followers:      100,
+	// Initialize the logging service
+	loggerSvc := NewLoggingManagementService(conf.LOGGER_URL)
+	// // Postgres Clien
+	databaseRepo, err := postgres.NewPostgresClient(*conf)
+	if err != nil {
+		logEntry := domain.LogMessage{
+			LogLevel: "ERROR",
+			Service:  "articles",
+			Message:  err.Error(),
+		}
+		loggerSvc.LogError(logEntry)
+		panic(err)
+	}
+	articleService := NewArticleManagementService(databaseRepo, loggerSvc)
+	app.InitGinRoutes(articleService, loggerSvc, *conf)
+	author := domain.Author{
+		AuthorID:         "b967127d-7535-420c-96a7-1d01b437a619",
+		Firstname:        "Antony",
+		Lastname:         "Injila",
+		Handle:           "About Antony Injila",
+		About:            "Are you managing a complex software project? In that case, you probably already know how difficult it is to predict and plan all the potential scenarios several months ahead. After all, many things can suddenly go wrong without any warning.",
+		ProfileImage:     "ProfileImage",
+		SocialMediaLinks: []string{"https://github.com/AntonyIS", "https://medium.com/@antonyshikubu"},
+		Following:        100,
+		Followers:        100,
 	}
 
 	err = articleService.DeleteArticleAll()
+	if err != nil {
+		t.Error(err)
+	}
 	t.Run("Test create new article", func(t *testing.T) {
 		err := articleService.DeleteArticleAll()
+		if err != nil {
+			t.Error(err)
+		}
 		title := "Article - Create article"
 		body := "Article body"
 		tags := []string{"Golang"}
-		var article = &domain.Article{
-			Title: title,
-			Body:  body,
-			Tags:  tags,
+		article := &domain.Article{
+			Title:    title,
+			Body:     body,
+			Tags:     tags,
+			AuthorID: author.AuthorID,
 		}
-		article.Author = author
 
 		article, err = articleService.CreateArticle(article)
 
@@ -76,12 +95,12 @@ func TestApplicationService(t *testing.T) {
 		title := "Article - Read article"
 		body := "Article body"
 		tags := []string{"Golang"}
-		var article = &domain.Article{
-			Title: title,
-			Body:  body,
-			Tags:  tags,
+		article := &domain.Article{
+			Title:    title,
+			Body:     body,
+			Tags:     tags,
+			AuthorID: author.AuthorID,
 		}
-		article.Author = author
 
 		article, err := articleService.CreateArticle(article)
 		if err != nil {
@@ -107,7 +126,7 @@ func TestApplicationService(t *testing.T) {
 	})
 
 	t.Run("Test Get articles by author", func(t *testing.T) {
-		articles, err := articleService.GetArticlesByAuthor(author.ID)
+		articles, err := articleService.GetArticlesByAuthor(author.AuthorID)
 		if err != nil {
 			t.Error(err)
 		}
@@ -118,10 +137,6 @@ func TestApplicationService(t *testing.T) {
 				t.Error("Expected array of articles")
 			}
 		}
-		// At this point we have 2 articles , test number of articles returned
-		// if len(*articles) != 2 {
-		// 	t.Error("Expected 2 articles, got ", len(*articles))
-		// }
 	})
 
 	t.Run("Test get articles by tags", func(t *testing.T) {
@@ -158,15 +173,16 @@ func TestApplicationService(t *testing.T) {
 	})
 
 	t.Run("Test update article", func(t *testing.T) {
+
 		title := "Article - Create article"
 		body := "Article body"
 		tags := []string{"Golang"}
-		var article = &domain.Article{
-			Title: title,
-			Body:  body,
-			Tags:  tags,
+		article := &domain.Article{
+			Title:    title,
+			Body:     body,
+			Tags:     tags,
+			AuthorID: author.AuthorID,
 		}
-		article.Author = author
 
 		article, err := articleService.CreateArticle(article)
 
@@ -178,13 +194,17 @@ func TestApplicationService(t *testing.T) {
 		article.Title = newTitle
 		article.Body = newBody
 
-		res, err := articleService.UpdateArticle(article)
+		res, err := articleService.UpdateArticle(article.ArticleID, article)
+
+		if err != nil {
+			t.Error(err)
+		}
 
 		if res.Title != newTitle {
-			t.Error(fmt.Sprintf("Expected title '%s' got '%s", newTitle, res.Title))
+			t.Errorf("Expected title '%s' got '%s", newTitle, res.Title)
 		}
 		if res.Body != newBody {
-			t.Error(fmt.Sprintf("Expected title '%s' got '%s", newBody, res.Body))
+			t.Errorf("Expected title '%s' got '%s", newBody, res.Body)
 		}
 
 	})
@@ -193,12 +213,12 @@ func TestApplicationService(t *testing.T) {
 		title := "Article - Create article"
 		body := "Article body"
 		tags := []string{"Golang"}
-		var article = &domain.Article{
-			Title: title,
-			Body:  body,
-			Tags:  tags,
+		article := &domain.Article{
+			Title:    title,
+			Body:     body,
+			Tags:     tags,
+			AuthorID: author.AuthorID,
 		}
-		article.Author = author
 
 		article, err := articleService.CreateArticle(article)
 
