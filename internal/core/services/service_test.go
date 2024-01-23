@@ -8,6 +8,7 @@ package services
 */
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -18,7 +19,7 @@ import (
 )
 
 func TestApplicationService(t *testing.T) {
-	// env := "prod"
+	fmt.Println("START TESTING")
 	// Read application environment and load configurations
 	conf, err := config.NewConfig()
 	if err != nil {

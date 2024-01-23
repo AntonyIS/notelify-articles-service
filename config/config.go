@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -23,12 +24,14 @@ type Config struct {
 
 func NewConfig() (*Config, error) {
 	ENV := os.Getenv("ENV")
-
-	if ENV == "test" {
+	fmt.Println("ENV", ENV== "")
+	if ENV == "" {
 		err := godotenv.Load("../../../.env")
 		if err != nil {
 			return nil, err
 		}
+		ENV = "developement_test"
+
 	} else {
 		err := godotenv.Load(".env")
 		if err != nil {
@@ -64,6 +67,9 @@ func NewConfig() (*Config, error) {
 	case "developement_test":
 		TEST = true
 		DEBUG = true
+		SECRET_KEY = "testsecret"
+		POSTGRES_PASSWORD = "pass1234"
+		POSTGRES_HOST = "localhost"
 		ARTICLE_TABLE = "TestArticles"
 
 	case "development":
