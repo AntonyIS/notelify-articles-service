@@ -22,7 +22,7 @@ jobs:
         go-version: 1.20
 
     - name: Build
-      run: go build -o bin/notelify-articles-service
+      run: go build -o bin/github.com/AntonyIS/notelify-articles-service
       
 
   # test:
