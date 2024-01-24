@@ -29,11 +29,11 @@ func NewConfig() (*Config, error) {
 		if err != nil {
 			return nil, err
 		}
-	case "development_test":
-		err := godotenv.Load("../../../.env")
-		if err != nil {
-			return nil, err
-		}
+		// case "development_test":
+		// 	err := godotenv.Load("../../../.env")
+		// 	if err != nil {
+		// 		return nil, err
+		// 	}
 	}
 
 	var (
