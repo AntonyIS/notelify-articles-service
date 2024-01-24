@@ -10,8 +10,13 @@ RUN apk update && apk add --no-cache git
 # Set the current working directory inside the container 
 WORKDIR /app
 
+# Set environment variables for build
+ARG ENV
+ENV ENV=${ENV}
+
+
 # Copy go mod and sum files 
-COPY go.mod go.sum ./
+COPY go.mod go.sum  ./
 
 # Download all dependencies. Dependencies will be cached if the go.mod and the go.sum files are not changed 
 RUN go mod download 
@@ -30,9 +35,10 @@ WORKDIR /root/
 
 # Copy the Pre-built binary file from the previous stage. Observe we also copied the .env file
 COPY --from=builder /app/src .
-    
+# COPY --from=builder /app/.env .
+
 # Expose port 8080 to the outside world
 EXPOSE 8001
 
-#Command to run the executable
-CMD ["./src" , "-env=dev"]
+# Command to run the executable
+CMD ["./src"]

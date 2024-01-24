@@ -23,7 +23,7 @@ go.work
 bin
 .env
 /bin
-/sysLogs
+/internal/adapters/logger/*.log
 
 go.mod
 go.sum

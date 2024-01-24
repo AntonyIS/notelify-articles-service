@@ -22,12 +22,14 @@ type GinHandler interface {
 type handler struct {
 	svc       ports.ArticleService
 	secretKey string
+	logger    ports.LoggingService
 }
 
-func NewGinHandler(svc ports.ArticleService, secretKey string) GinHandler {
+func NewGinHandler(svc ports.ArticleService, secretKey string, logger ports.LoggingService) GinHandler {
 	routerHandler := handler{
 		svc:       svc,
 		secretKey: secretKey,
+		logger:    logger,
 	}
 	return routerHandler
 }
@@ -41,65 +43,66 @@ func (h handler) CreateArticle(ctx *gin.Context) {
 		return
 	}
 
-	content, err := h.svc.CreateArticle(res)
+	response, err := h.svc.CreateArticle(res)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
-	ctx.JSON(http.StatusCreated, content)
+	ctx.JSON(http.StatusCreated, response)
 }
 
 func (h handler) GetArticleByID(ctx *gin.Context) {
-	id := ctx.Param("article_id")
-	article, err := h.svc.GetArticleByID(id)
+	article_id := ctx.Param("article_id")
+	response, err := h.svc.GetArticleByID(article_id)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
-			"err": err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
-
-	ctx.JSON(http.StatusOK, article)
+	ctx.JSON(http.StatusOK, response)
 }
 
 func (h handler) GetArticles(ctx *gin.Context) {
-	articles, err := h.svc.GetArticles()
+	response, err := h.svc.GetArticles()
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
-			"err": err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
-	ctx.JSON(http.StatusOK, *articles)
+	ctx.JSON(http.StatusOK, *response)
 }
 
 func (h handler) GetArticlesByAuthor(ctx *gin.Context) {
 	id := ctx.Param("author_id")
-	articles, err := h.svc.GetArticlesByAuthor(id)
+	response, err := h.svc.GetArticlesByAuthor(id)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
-			"err": err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
-	ctx.JSON(http.StatusOK, articles)
+	ctx.JSON(http.StatusOK, response)
 }
 
 func (h handler) GetArticlesByTag(ctx *gin.Context) {
-	tag := ctx.Param("tag")
-	articles, err := h.svc.GetArticlesByTag(tag)
+	tag := ctx.Param("tag_name")
+	response, err := h.svc.GetArticlesByTag(tag)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
-			"err": err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
-	ctx.JSON(http.StatusOK, articles)
+	ctx.JSON(http.StatusOK, response)
 }
 
 func (h handler) UpdateArticle(ctx *gin.Context) {
+	article_id := ctx.Param("article_id")
+
 	var res *domain.Article
 	if err := ctx.ShouldBindJSON(&res); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -107,22 +110,24 @@ func (h handler) UpdateArticle(ctx *gin.Context) {
 		})
 		return
 	}
-	article, err := h.svc.UpdateArticle(res)
+	response, err := h.svc.UpdateArticle(article_id, res)
+
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
-			"err": err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
-	ctx.JSON(http.StatusOK, article)
+	ctx.JSON(http.StatusOK, response)
 }
 
 func (h handler) DeleteArticle(ctx *gin.Context) {
-	id := ctx.Param("id")
-	err := h.svc.DeleteArticle(id)
+	article_id := ctx.Param("article_id")
+	err := h.svc.DeleteArticle(article_id)
+
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
-			"err": err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
@@ -133,9 +138,10 @@ func (h handler) DeleteArticleAll(ctx *gin.Context) {
 	err := h.svc.DeleteArticleAll()
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
-			"err": err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
+
 	ctx.JSON(http.StatusOK, gin.H{"message": "Article deleted successfully"})
 }
