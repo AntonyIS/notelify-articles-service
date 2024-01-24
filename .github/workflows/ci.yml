@@ -14,40 +14,40 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: '1.20'
+
+    - name: Build
+      run: go build -o bin/notelify-articles-service
+      
+
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_PASSWORD: pass1234
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
 
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
-        go-version: 1.20
+        go-version: '1.20'
 
-    - name: Build
-      run: go build -o bin/github.com/AntonyIS/notelify-articles-service
-      
-
-  # test:
-  #   runs-on: ubuntu-latest
-
-  #   services:
-  #     postgres:
-  #       image: postgres:latest
-  #       env:
-  #         POSTGRES_PASSWORD: pass1234
-  #       ports:
-  #         - 5432:5432
-  #       options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
-
-  #   steps:
-  #   - name: Checkout repository
-  #     uses: actions/checkout@v2
-
-  #   - name: Set up Go
-  #     uses: actions/setup-go@v2
-  #     with:
-  #       go-version: 1.17
-
-  #   - name: Run tests
-  #     run: ENV=development_test go test -v ./...
+    - name: Run tests
+      run: ENV=development_test go test -v ./...
 
   # build-and-push-docker:
   #   runs-on: ubuntu-latest
