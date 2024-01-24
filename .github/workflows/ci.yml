@@ -70,7 +70,7 @@ jobs:
         tags: antonyinjila/notelify-articles-service:latest
       env:
         DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME_1 }}
-        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD_1 }}
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
   # deploy:
   #   runs-on: ubuntu-latest
