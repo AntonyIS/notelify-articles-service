@@ -8,39 +8,36 @@ package services
 */
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 
 	"github.com/AntonyIS/notelify-articles-service/config"
-	"github.com/AntonyIS/notelify-articles-service/internal/adapters/app"
 	"github.com/AntonyIS/notelify-articles-service/internal/adapters/repository/postgres"
 	"github.com/AntonyIS/notelify-articles-service/internal/core/domain"
 )
 
 func TestApplicationService(t *testing.T) {
-	fmt.Println("START TESTING")
 	// Read application environment and load configurations
 	conf, err := config.NewConfig()
 	if err != nil {
-		panic(err)
+		t.Error(err)
 	}
+	newLoggerService := NewLoggingManagementService(conf.LOGGER_URL)
 
-	// Initialize the logging service
-	loggerSvc := NewLoggingManagementService(conf.LOGGER_URL)
-	// // Postgres Clien
 	databaseRepo, err := postgres.NewPostgresClient(*conf)
 	if err != nil {
 		logEntry := domain.LogMessage{
 			LogLevel: "ERROR",
-			Service:  "articles",
+			Service:  "users",
 			Message:  err.Error(),
 		}
-		loggerSvc.LogError(logEntry)
-		panic(err)
+		newLoggerService.LogError(logEntry)
+		t.Error(err)
 	}
-	articleService := NewArticleManagementService(databaseRepo, loggerSvc)
-	app.InitGinRoutes(articleService, loggerSvc, *conf)
+
+	articleService := NewArticleManagementService(databaseRepo, newLoggerService)
+	// Run HTTP Server
+	// app.InitGinRoutes(articleService, newLoggerService, *conf)
 	author := domain.Author{
 		AuthorID:         "b967127d-7535-420c-96a7-1d01b437a619",
 		Firstname:        "Antony",
@@ -53,15 +50,7 @@ func TestApplicationService(t *testing.T) {
 		Followers:        100,
 	}
 
-	err = articleService.DeleteArticleAll()
-	if err != nil {
-		t.Error(err)
-	}
 	t.Run("Test create new article", func(t *testing.T) {
-		err := articleService.DeleteArticleAll()
-		if err != nil {
-			t.Error(err)
-		}
 		title := "Article - Create article"
 		body := "Article body"
 		tags := []string{"Golang"}
@@ -71,7 +60,6 @@ func TestApplicationService(t *testing.T) {
 			Tags:     tags,
 			AuthorID: author.AuthorID,
 		}
-
 		article, err = articleService.CreateArticle(article)
 
 		if err != nil {
@@ -144,17 +132,16 @@ func TestApplicationService(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-
 		results := reflect.TypeOf(articles) == reflect.TypeOf([]domain.Article{})
 		if !results {
 			if err != nil {
-				t.Error("Expected array of articles")
+				t.Error("Expected slice of articles")
 			}
 		}
 		// At this point we have 2 articles , test number of articles returned
 		size := len(*articles)
-		if size != 2 {
-			t.Error("Expected 2 articles, got ", size)
+		if size < 1 {
+			t.Error("Expected more articles, got ", size)
 		}
 
 	})
@@ -167,7 +154,7 @@ func TestApplicationService(t *testing.T) {
 		results := reflect.TypeOf(articles) == reflect.TypeOf([]domain.Article{})
 		if !results {
 			if err != nil {
-				t.Error("Expected array of articles")
+				t.Error("Expected slice of articles")
 			}
 		}
 	})

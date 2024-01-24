@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -24,20 +23,17 @@ type Config struct {
 
 func NewConfig() (*Config, error) {
 	ENV := os.Getenv("ENV")
-	fmt.Println("ENV", ENV== "")
-	if ENV == "" {
-		err := godotenv.Load("../../../.env")
-		if err != nil {
-			return nil, err
-		}
-		ENV = "developement_test"
-
-	} else {
+	switch ENV {
+	case "development":
 		err := godotenv.Load(".env")
 		if err != nil {
 			return nil, err
 		}
-		ENV = os.Getenv("ENV")
+	case "development_test":
+		err := godotenv.Load("../../../.env")
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var (
@@ -62,21 +58,21 @@ func NewConfig() (*Config, error) {
 	case "production_test":
 		TEST = true
 		DEBUG = true
-		ARTICLE_TABLE = "TestArticles"
-
-	case "developement_test":
-		TEST = true
-		DEBUG = true
-		SECRET_KEY = "testsecret"
-		POSTGRES_PASSWORD = "pass1234"
-		POSTGRES_HOST = "localhost"
-		ARTICLE_TABLE = "TestArticles"
+		ARTICLE_TABLE = "PriductionTestArticles"
 
 	case "development":
 		TEST = true
 		DEBUG = true
 		POSTGRES_HOST = "localhost"
 		ARTICLE_TABLE = "DevArticles"
+
+	case "development_test":
+		TEST = true
+		DEBUG = true
+		SECRET_KEY = "testsecret"
+		POSTGRES_PASSWORD = "pass1234"
+		POSTGRES_HOST = "localhost"
+		ARTICLE_TABLE = "TestArticles"
 
 	case "docker":
 		TEST = true
@@ -88,6 +84,7 @@ func NewConfig() (*Config, error) {
 		TEST = true
 		DEBUG = true
 		ARTICLE_TABLE = "DockerArticles"
+		LOGGER_URL = "http://logger:8002/v1/logger"
 	}
 
 	config := Config{
