@@ -69,8 +69,8 @@ jobs:
         push: true
         tags: antonyinjila/notelify-articles-service:latest
       env:
-        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-        DOCKER_PASSWORD: ${{ secrets.DOCKER_PAT }}
+        DOCKER_USERNAME: ${{ variables.DOCKER_USERNAME }}
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         ENV: "docker"
 
 
