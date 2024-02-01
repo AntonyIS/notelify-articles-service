@@ -27,7 +27,7 @@ func InitGinRoutes(svc ports.ArticleService, logger ports.LoggingService, conf a
 
 	handler := NewGinHandler(svc, conf.SECRET_KEY, logger)
 
-	articleRoutes := router.Group("/v1/articles")
+	articleRoutes := router.Group("/articles/v1")
 	{
 		articleRoutes.POST("/", handler.CreateArticle)
 		articleRoutes.GET("/:article_id", handler.GetArticleByID)

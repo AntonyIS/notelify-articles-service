@@ -36,6 +36,8 @@ func NewLoggingManagementService(loggerURL string) *loggingManagementService {
 func (svc *articleManagementService) CreateArticle(article *domain.Article) (*domain.Article, error) {
 	article.ArticleID = uuid.New().String()
 	article.PublishDate = time.Now()
+	article.UpdatedDate = time.Now()
+
 	article, err := svc.repo.CreateArticle(article)
 	if err != nil {
 		logEntry := domain.LogMessage{
@@ -217,7 +219,7 @@ func (svc *loggingManagementService) SendLog(logEntry domain.LogMessage) {
 		fmt.Println("Error encoding JSON payload:", err)
 		return
 	}
-	// Create a new POST request with the JSON payload
+
 	resp, err := http.Post(svc.loggerURL, "application/json", bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		fmt.Println("Error making POST request:", err)

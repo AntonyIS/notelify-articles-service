@@ -12,6 +12,8 @@ type Article struct {
 	Body         string    `json:"body"`
 	Tags         []string  `json:"tags"`
 	PublishDate  time.Time `json:"publish_date"`
+	UpdatedDate  time.Time `json:"updated_date"`
+	Author       Author    `json:"author"`
 	AuthorID     string    `json:"author_id"`
 }
 
@@ -26,7 +28,6 @@ type Author struct {
 	Following        int      `json:"following"`
 	Followers        int      `json:"followers"`
 }
-
 
 type LogMessage struct {
 	LogLevel string `json:"log_level"`
