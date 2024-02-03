@@ -54,7 +54,7 @@ func (h handler) CreateArticle(ctx *gin.Context) {
 }
 
 func (h handler) GetArticleByID(ctx *gin.Context) {
-	article_id := ctx.Param("article_id")
+	article_id := ctx.Param("post_id")
 	response, err := h.svc.GetArticleByID(article_id)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
@@ -101,7 +101,7 @@ func (h handler) GetArticlesByTag(ctx *gin.Context) {
 }
 
 func (h handler) UpdateArticle(ctx *gin.Context) {
-	article_id := ctx.Param("article_id")
+	article_id := ctx.Param("post_id")
 
 	var res *domain.Article
 	if err := ctx.ShouldBindJSON(&res); err != nil {
@@ -122,7 +122,7 @@ func (h handler) UpdateArticle(ctx *gin.Context) {
 }
 
 func (h handler) DeleteArticle(ctx *gin.Context) {
-	article_id := ctx.Param("article_id")
+	article_id := ctx.Param("post_id")
 	err := h.svc.DeleteArticle(article_id)
 
 	if err != nil {

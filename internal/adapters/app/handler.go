@@ -27,15 +27,15 @@ func InitGinRoutes(svc ports.ArticleService, logger ports.LoggingService, conf a
 
 	handler := NewGinHandler(svc, conf.SECRET_KEY, logger)
 
-	articleRoutes := router.Group("/articles/v1")
+	articleRoutes := router.Group("/posts/v1")
 	{
 		articleRoutes.POST("/", handler.CreateArticle)
-		articleRoutes.GET("/:article_id", handler.GetArticleByID)
+		articleRoutes.GET("/:post_id", handler.GetArticleByID)
 		articleRoutes.GET("/", handler.GetArticles)
 		articleRoutes.GET("/author/:author_id", handler.GetArticlesByAuthor)
 		articleRoutes.GET("/tag/:tag_name", handler.GetArticlesByTag)
-		articleRoutes.PUT("/:article_id", handler.UpdateArticle)
-		articleRoutes.DELETE("/:article_id", handler.DeleteArticle)
+		articleRoutes.PUT("/:post_id", handler.UpdateArticle)
+		articleRoutes.DELETE("/:post_id", handler.DeleteArticle)
 		articleRoutes.DELETE("/", handler.DeleteArticleAll)
 	}
 	logEntry := domain.LogMessage{
