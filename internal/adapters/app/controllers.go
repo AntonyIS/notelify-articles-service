@@ -17,6 +17,7 @@ type GinHandler interface {
 	UpdateArticle(ctx *gin.Context)
 	DeleteArticle(ctx *gin.Context)
 	DeleteArticleAll(ctx *gin.Context)
+	HealthCheck(ctx *gin.Context)
 }
 
 type handler struct {
@@ -40,7 +41,6 @@ func (h handler) CreateArticle(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
-		return
 	}
 
 	response, err := h.svc.CreateArticle(res)
@@ -48,7 +48,6 @@ func (h handler) CreateArticle(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
-		return
 	}
 	ctx.JSON(http.StatusCreated, response)
 }
@@ -60,7 +59,6 @@ func (h handler) GetArticleByID(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
 		})
-		return
 	}
 	ctx.JSON(http.StatusOK, response)
 }
@@ -71,7 +69,6 @@ func (h handler) GetArticles(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
 		})
-		return
 	}
 	ctx.JSON(http.StatusOK, *response)
 }
@@ -83,7 +80,6 @@ func (h handler) GetArticlesByAuthor(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
 		})
-		return
 	}
 	ctx.JSON(http.StatusOK, response)
 }
@@ -95,7 +91,6 @@ func (h handler) GetArticlesByTag(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
 		})
-		return
 	}
 	ctx.JSON(http.StatusOK, response)
 }
@@ -108,7 +103,6 @@ func (h handler) UpdateArticle(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
-		return
 	}
 	response, err := h.svc.UpdateArticle(article_id, res)
 
@@ -116,7 +110,6 @@ func (h handler) UpdateArticle(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
 		})
-		return
 	}
 	ctx.JSON(http.StatusOK, response)
 }
@@ -129,7 +122,6 @@ func (h handler) DeleteArticle(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
 		})
-		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"message": "Article deleted successfully"})
 }
@@ -140,8 +132,11 @@ func (h handler) DeleteArticleAll(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
 		})
-		return
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"message": "Article deleted successfully"})
+}
+
+func (h handler) HealthCheck(ctx *gin.Context) {
+	ctx.JSON(http.StatusOK, gin.H{"message": "Server running", "status": "success"})
 }

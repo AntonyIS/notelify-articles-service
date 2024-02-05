@@ -9,7 +9,6 @@ import (
 )
 
 func RunService() {
-	// Read application environment and load configurations
 	conf, err := config.NewConfig()
 	if err != nil {
 		panic(err)
@@ -19,16 +18,15 @@ func RunService() {
 	databaseRepo, err := postgres.NewPostgresClient(*conf)
 	if err != nil {
 		logEntry := domain.LogMessage{
-			LogLevel: "ERROR",
+			LogLevel: "INFOR",
 			Service:  "users",
 			Message:  err.Error(),
 		}
-		newLoggerService.LogError(logEntry)
+		newLoggerService.LogInfo(logEntry)
 		panic(err)
 	}
 
 	articleService := services.NewArticleManagementService(databaseRepo, newLoggerService)
-	// Run HTTP Server
 	app.InitGinRoutes(articleService, newLoggerService, *conf)
 
 }

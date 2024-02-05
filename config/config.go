@@ -80,6 +80,7 @@ func NewConfig() (*Config, error) {
 		DEBUG = true
 		ARTICLE_TABLE = "DockerTestArticles"
 		LOGGER_URL = "http://logger:8002/logger/v1/posts"
+		
 	}
 
 	config := Config{

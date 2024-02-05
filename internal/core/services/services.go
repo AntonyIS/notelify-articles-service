@@ -219,7 +219,6 @@ func (svc *loggingManagementService) SendLog(logEntry domain.LogMessage) {
 		fmt.Println("Error encoding JSON payload:", err)
 		return
 	}
-
 	resp, err := http.Post(svc.loggerURL, "application/json", bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		fmt.Println("Error making POST request:", err)

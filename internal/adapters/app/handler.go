@@ -29,6 +29,7 @@ func InitGinRoutes(svc ports.ArticleService, logger ports.LoggingService, conf a
 
 	articleRoutes := router.Group("/posts/v1")
 	{
+		articleRoutes.GET("/healthcheck", handler.HealthCheck)
 		articleRoutes.POST("/", handler.CreateArticle)
 		articleRoutes.GET("/:post_id", handler.GetArticleByID)
 		articleRoutes.GET("/", handler.GetArticles)
