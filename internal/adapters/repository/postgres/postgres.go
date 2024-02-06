@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	appConfig "github.com/AntonyIS/notelify-articles-service/config"
 	"github.com/AntonyIS/notelify-articles-service/internal/core/domain"
@@ -27,15 +28,15 @@ func NewPostgresClient(conf appConfig.Config) (*postgresDBClient, error) {
 
 	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable", host, port, user, dbname, password)
 
-	db, err := sql.Open("postgres", dsn)
-
+	connectionAttemps := 1
+	db, err := dbConnectionAttempts(dsn, connectionAttemps)
 	if err != nil {
 		return nil, err
 	}
-
-	err = db.Ping()
+	err = dbPingAttempts(db,connectionAttemps )
 
 	if err != nil {
+		fmt.Println("DATABASE INACTIVE...")
 		return nil, err
 	}
 	queryString := fmt.Sprintf(`
@@ -144,7 +145,6 @@ func (psql *postgresDBClient) GetArticleByID(article_id string) (*domain.Article
 		return nil, err
 	}
 
-	// Unmarshal JSONB data into Author struct
 	err = json.Unmarshal(authorJSON, &article.Author)
 	if err != nil {
 		return nil, err
@@ -196,7 +196,6 @@ func (psql *postgresDBClient) GetArticlesByAuthor(author_id string) (*[]domain.A
 			return nil, err
 		}
 
-		// Unmarshal JSONB data into Author struct
 		err = json.Unmarshal(authorJSON, &article.Author)
 		if err != nil {
 			return nil, err
@@ -390,5 +389,37 @@ func (psql *postgresDBClient) DeleteArticleAll() error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func dbConnectionAttempts(dsn string, connectionAttemps int) (*sql.DB, error) {
+	db, err := sql.Open("postgres", dsn)
+	if err != nil {
+		if connectionAttemps <= 3 {
+			fmt.Println("Sleeping for 5 seconds on count ", connectionAttemps)
+			time.Sleep(5 * time.Second)
+			connectionAttemps += 1
+			dbConnectionAttempts(dsn, connectionAttemps)
+		} else {
+			return nil, err
+		}
+	}
+
+	return db, nil
+}
+
+func dbPingAttempts(db *sql.DB, connectionAttemps int) error {
+	err := db.Ping()
+	if err != nil {
+		if connectionAttemps <= 3 {
+			fmt.Println("DB Ping attept :", connectionAttemps)
+			time.Sleep(5 * time.Second)
+			connectionAttemps += 1
+			dbPingAttempts(db, connectionAttemps)
+		} else {
+			return err
+		}
+	}
+
 	return nil
 }

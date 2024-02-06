@@ -14,11 +14,12 @@ func RunService() {
 		panic(err)
 	}
 	newLoggerService := services.NewLoggingManagementService(conf.LOGGER_URL)
-
+	// databaseConnectionAttempts := 0
 	databaseRepo, err := postgres.NewPostgresClient(*conf)
+
 	if err != nil {
 		logEntry := domain.LogMessage{
-			LogLevel: "INFOR",
+			LogLevel: "ERROR",
 			Service:  "users",
 			Message:  err.Error(),
 		}

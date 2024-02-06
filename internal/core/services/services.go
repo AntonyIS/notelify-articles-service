@@ -19,6 +19,10 @@ type articleManagementService struct {
 	logger ports.LoggingService
 }
 
+type loggingManagementService struct {
+	loggerURL string
+}
+
 func NewArticleManagementService(repo ports.ArticleRepository, logger ports.LoggingService) *articleManagementService {
 	svc := articleManagementService{
 		repo:   repo,
@@ -26,6 +30,7 @@ func NewArticleManagementService(repo ports.ArticleRepository, logger ports.Logg
 	}
 	return &svc
 }
+
 func NewLoggingManagementService(loggerURL string) *loggingManagementService {
 	svc := loggingManagementService{
 		loggerURL: loggerURL,
@@ -42,7 +47,7 @@ func (svc *articleManagementService) CreateArticle(article *domain.Article) (*do
 	if err != nil {
 		logEntry := domain.LogMessage{
 			LogLevel: "ERROR",
-			Service:  "articles",
+			Service:  "posts",
 			Message:  err.Error(),
 		}
 		svc.logger.LogError(logEntry)
@@ -50,8 +55,8 @@ func (svc *articleManagementService) CreateArticle(article *domain.Article) (*do
 	}
 	logEntry := domain.LogMessage{
 		LogLevel: "INFO",
-		Service:  "articles",
-		Message:  "Article created successufly",
+		Service:  "posts",
+		Message:  "posts created successufly",
 	}
 	svc.logger.LogInfo(logEntry)
 	return article, nil
@@ -62,7 +67,7 @@ func (svc *articleManagementService) GetArticleByID(article_id string) (*domain.
 	if err != nil {
 		logEntry := domain.LogMessage{
 			LogLevel: "ERROR",
-			Service:  "articles",
+			Service:  "posts",
 			Message:  err.Error(),
 		}
 		svc.logger.LogError(logEntry)
@@ -70,7 +75,7 @@ func (svc *articleManagementService) GetArticleByID(article_id string) (*domain.
 	}
 	logEntry := domain.LogMessage{
 		LogLevel: "INFO",
-		Service:  "articles",
+		Service:  "posts",
 		Message:  "Article with ID [%s] found successufly",
 	}
 	svc.logger.LogInfo(logEntry)
@@ -82,7 +87,7 @@ func (svc *articleManagementService) GetArticlesByAuthor(author_id string) (*[]d
 	if err != nil {
 		logEntry := domain.LogMessage{
 			LogLevel: "ERROR",
-			Service:  "articles",
+			Service:  "posts",
 			Message:  err.Error(),
 		}
 		svc.logger.LogError(logEntry)
@@ -90,7 +95,7 @@ func (svc *articleManagementService) GetArticlesByAuthor(author_id string) (*[]d
 	}
 	logEntry := domain.LogMessage{
 		LogLevel: "INFO",
-		Service:  "articles",
+		Service:  "posts",
 		Message:  "Articles by author found successufly",
 	}
 	svc.logger.LogInfo(logEntry)
@@ -102,7 +107,7 @@ func (svc *articleManagementService) GetArticlesByTag(tag string) (*[]domain.Art
 	if err != nil {
 		logEntry := domain.LogMessage{
 			LogLevel: "ERROR",
-			Service:  "articles",
+			Service:  "posts",
 			Message:  err.Error(),
 		}
 		svc.logger.LogError(logEntry)
@@ -121,7 +126,7 @@ func (svc *articleManagementService) GetArticlesByTag(tag string) (*[]domain.Art
 	}
 	logEntry := domain.LogMessage{
 		LogLevel: "INFO",
-		Service:  "articles",
+		Service:  "posts",
 		Message:  "Articles by tag found successufly",
 	}
 	svc.logger.LogInfo(logEntry)
@@ -133,7 +138,7 @@ func (svc *articleManagementService) GetArticles() (*[]domain.Article, error) {
 	if err != nil {
 		logEntry := domain.LogMessage{
 			LogLevel: "ERROR",
-			Service:  "articles",
+			Service:  "posts",
 			Message:  err.Error(),
 		}
 		svc.logger.LogError(logEntry)
@@ -141,7 +146,7 @@ func (svc *articleManagementService) GetArticles() (*[]domain.Article, error) {
 	}
 	logEntry := domain.LogMessage{
 		LogLevel: "INFO",
-		Service:  "articles",
+		Service:  "posts",
 		Message:  "Articles found successufly",
 	}
 	svc.logger.LogInfo(logEntry)
@@ -153,7 +158,7 @@ func (svc *articleManagementService) UpdateArticle(article_id string, article *d
 	if err != nil {
 		logEntry := domain.LogMessage{
 			LogLevel: "ERROR",
-			Service:  "articles",
+			Service:  "posts",
 			Message:  err.Error(),
 		}
 		svc.logger.LogError(logEntry)
@@ -161,7 +166,7 @@ func (svc *articleManagementService) UpdateArticle(article_id string, article *d
 	}
 	logEntry := domain.LogMessage{
 		LogLevel: "INFO",
-		Service:  "articles",
+		Service:  "posts",
 		Message:  "Article with ID [%s] updated successufly",
 	}
 	svc.logger.LogInfo(logEntry)
@@ -173,7 +178,7 @@ func (svc *articleManagementService) DeleteArticle(article_id string) error {
 	if err != nil {
 		logEntry := domain.LogMessage{
 			LogLevel: "ERROR",
-			Service:  "articles",
+			Service:  "posts",
 			Message:  err.Error(),
 		}
 		svc.logger.LogError(logEntry)
@@ -181,7 +186,7 @@ func (svc *articleManagementService) DeleteArticle(article_id string) error {
 	}
 	logEntry := domain.LogMessage{
 		LogLevel: "INFO",
-		Service:  "articles",
+		Service:  "posts",
 		Message:  "Article with ID [%s] deleted successufly",
 	}
 	svc.logger.LogInfo(logEntry)
@@ -193,7 +198,7 @@ func (svc *articleManagementService) DeleteArticleAll() error {
 	if err != nil {
 		logEntry := domain.LogMessage{
 			LogLevel: "ERROR",
-			Service:  "articles",
+			Service:  "posts",
 			Message:  err.Error(),
 		}
 		svc.logger.LogError(logEntry)
@@ -201,15 +206,11 @@ func (svc *articleManagementService) DeleteArticleAll() error {
 	}
 	logEntry := domain.LogMessage{
 		LogLevel: "INFO",
-		Service:  "articles",
+		Service:  "posts",
 		Message:  "Articles deleted successufly",
 	}
 	svc.logger.LogInfo(logEntry)
 	return nil
-}
-
-type loggingManagementService struct {
-	loggerURL string
 }
 
 func (svc *loggingManagementService) SendLog(logEntry domain.LogMessage) {
@@ -228,25 +229,25 @@ func (svc *loggingManagementService) SendLog(logEntry domain.LogMessage) {
 }
 
 func (svc *loggingManagementService) LogDebug(logEntry domain.LogMessage) {
-	message := fmt.Sprintf("[%s] [DEBUG] %s %s", logEntry.Service, getCurrentDateTime(), logEntry.Message)
+	message := fmt.Sprintf("[%s] [DEBUG] %s %s", getCurrentDateTime(), logEntry.Service, logEntry.Message)
 	logEntry.Message = message
 	svc.SendLog(logEntry)
 }
 
 func (svc *loggingManagementService) LogInfo(logEntry domain.LogMessage) {
-	message := fmt.Sprintf("[%s] [INFO] %s %s", logEntry.Service, getCurrentDateTime(), logEntry.Message)
+	message := fmt.Sprintf("[%s] [INFO] %s %s", getCurrentDateTime(), logEntry.Service, logEntry.Message)
 	logEntry.Message = message
 	svc.SendLog(logEntry)
 }
 
 func (svc *loggingManagementService) LogWarning(logEntry domain.LogMessage) {
-	message := fmt.Sprintf("[%s] [WARNING] %s %s", logEntry.Service, getCurrentDateTime(), logEntry.Message)
+	message := fmt.Sprintf("[%s] [WARNING] %s %s", getCurrentDateTime(), logEntry.Service, logEntry.Message)
 	logEntry.Message = message
 	svc.SendLog(logEntry)
 }
 
 func (svc *loggingManagementService) LogError(logEntry domain.LogMessage) {
-	message := fmt.Sprintf("[%s] [ERROR] %s %s", logEntry.Service, getCurrentDateTime(), logEntry.Message)
+	message := fmt.Sprintf("[%s] [ERROR] %s %s", getCurrentDateTime(), logEntry.Service, logEntry.Message)
 	logEntry.Message = message
 	svc.SendLog(logEntry)
 }
