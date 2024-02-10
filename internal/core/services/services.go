@@ -42,7 +42,6 @@ func (svc *articleManagementService) CreateArticle(article *domain.Article) (*do
 	article.ArticleID = uuid.New().String()
 	article.PublishDate = time.Now()
 	article.UpdatedDate = time.Now()
-
 	article, err := svc.repo.CreateArticle(article)
 	if err != nil {
 		logEntry := domain.LogMessage{
@@ -154,7 +153,9 @@ func (svc *articleManagementService) GetArticles() (*[]domain.Article, error) {
 }
 
 func (svc *articleManagementService) UpdateArticle(article_id string, article *domain.Article) (*domain.Article, error) {
+	
 	article, err := svc.repo.UpdateArticle(article_id, article)
+	
 	if err != nil {
 		logEntry := domain.LogMessage{
 			LogLevel: "ERROR",

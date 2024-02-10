@@ -10,11 +10,13 @@ type Article struct {
 	Subtitle     string    `json:"subtitle"`
 	Introduction string    `json:"introduction"`
 	Body         string    `json:"body"`
+	AuthorID     string    `json:"author_id"`
+	Likes        int       `json:"likes"`
+	Dislikes     int       `json:"dislikes"`
 	Tags         []string  `json:"tags"`
 	PublishDate  time.Time `json:"publish_date"`
 	UpdatedDate  time.Time `json:"updated_date"`
 	Author       Author    `json:"author"`
-	AuthorID     string    `json:"author_id"`
 }
 
 type Author struct {

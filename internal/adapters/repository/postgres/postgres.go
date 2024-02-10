@@ -33,7 +33,7 @@ func NewPostgresClient(conf appConfig.Config) (*postgresDBClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = dbPingAttempts(db,connectionAttemps )
+	err = dbPingAttempts(db, connectionAttemps)
 
 	if err != nil {
 		fmt.Println("DATABASE INACTIVE...")
@@ -50,7 +50,9 @@ func NewPostgresClient(conf appConfig.Config) (*postgresDBClient, error) {
 			publish_date TIMESTAMP,
 			updated_date TIMESTAMP,
 			author JSONB NOT NULL,
-			author_id VARCHAR(255)
+			author_id VARCHAR(255),
+			likes INT,
+			dislikes INT
 	)
 	`, tablename)
 
@@ -67,7 +69,6 @@ func NewPostgresClient(conf appConfig.Config) (*postgresDBClient, error) {
 }
 
 func (psql *postgresDBClient) CreateArticle(article *domain.Article) (*domain.Article, error) {
-	// Convert Author struct to JSON string
 	authorJSON, err := json.Marshal(article.Author)
 	if err != nil {
 		return nil, err
@@ -83,9 +84,11 @@ func (psql *postgresDBClient) CreateArticle(article *domain.Article) (*domain.Ar
 			publish_date,
 			updated_date,
 			author,
-			author_id
+			author_id,
+			likes,
+			dislikes
 		)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`, psql.tablename)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`, psql.tablename)
 	_, err = psql.db.Exec(
 		query,
 		article.ArticleID,
@@ -96,8 +99,10 @@ func (psql *postgresDBClient) CreateArticle(article *domain.Article) (*domain.Ar
 		pq.Array(article.Tags),
 		article.PublishDate,
 		article.UpdatedDate,
-		string(authorJSON), // Convert Author struct to JSON string
+		string(authorJSON),
 		article.AuthorID,
+		article.Likes,
+		article.Dislikes,
 	)
 
 	if err != nil {
@@ -120,7 +125,9 @@ func (psql *postgresDBClient) GetArticleByID(article_id string) (*domain.Article
 			publish_date,
 			updated_date,
 			author,
-			author_id
+			author_id,
+			likes,
+			dislikes
 		FROM %s 
 		WHERE article_id = $1`,
 		psql.tablename,
@@ -139,6 +146,8 @@ func (psql *postgresDBClient) GetArticleByID(article_id string) (*domain.Article
 		&article.UpdatedDate,
 		&authorJSON,
 		&article.AuthorID,
+		&article.Likes,
+		&article.Dislikes,
 	)
 
 	if err != nil {
@@ -164,7 +173,9 @@ func (psql *postgresDBClient) GetArticlesByAuthor(author_id string) (*[]domain.A
 			publish_date,
 			updated_date,
 			author,
-			author_id
+			author_id,
+			likes,
+			dislikes
 		FROM %s 
 		WHERE author_id = $1`, psql.tablename)
 	rows, err := psql.db.Query(query, author_id)
@@ -191,6 +202,8 @@ func (psql *postgresDBClient) GetArticlesByAuthor(author_id string) (*[]domain.A
 			&article.UpdatedDate,
 			&authorJSON,
 			&article.AuthorID,
+			&article.Likes,
+			&article.Dislikes,
 		)
 		if err != nil {
 			return nil, err
@@ -218,7 +231,9 @@ func (psql *postgresDBClient) GetArticlesByTag(tag string) (*[]domain.Article, e
 			publish_date,
 			updated_date,
 			author,
-			author_id
+			author_id,
+			likes,
+			dislikes
 		FROM %s 
 		WHERE $1 = ANY(tags)`,
 		psql.tablename,
@@ -245,6 +260,8 @@ func (psql *postgresDBClient) GetArticlesByTag(tag string) (*[]domain.Article, e
 			&article.UpdatedDate,
 			&article.Author,
 			&article.AuthorID,
+			&article.Likes,
+			&article.Dislikes,
 		)
 		if err != nil {
 			return nil, err
@@ -267,7 +284,10 @@ func (psql *postgresDBClient) GetArticles() (*[]domain.Article, error) {
 		publish_date,
 		updated_date,
 		author,
-		author_id
+		author_id,
+		likes,
+		dislikes
+		
 	FROM %s `, psql.tablename)
 
 	rows, err := psql.db.Query(query)
@@ -290,12 +310,12 @@ func (psql *postgresDBClient) GetArticles() (*[]domain.Article, error) {
 			&article.UpdatedDate,
 			&authorJSON,
 			&article.AuthorID,
+			&article.Likes,
+			&article.Dislikes,
 		)
 		if err != nil {
 			return nil, err
 		}
-
-		// Unmarshal JSONB data into Author struct
 		err = json.Unmarshal(authorJSON, &article.Author)
 		if err != nil {
 			return nil, err
@@ -321,7 +341,14 @@ func (psql *postgresDBClient) UpdateArticle(article_id string, article *domain.A
 	res.PublishDate = article.PublishDate
 	res.UpdatedDate = article.UpdatedDate
 	res.AuthorID = article.AuthorID
+	res.Author = article.Author
+	res.Likes = article.Likes
+	res.Dislikes = article.Dislikes
 
+	authorJSON, err := json.Marshal(article.Author)
+	if err != nil {
+		return nil, err
+	}
 	query := fmt.Sprintf(`
 	UPDATE 
 		%s 
@@ -333,13 +360,14 @@ func (psql *postgresDBClient) UpdateArticle(article_id string, article *domain.A
 		tags=$5,
 		publish_date=$6,
 		updated_date=$7,
-		author=$8
-		author_id=$9	
+		author=$8,
+		author_id=$9,	
+		likes=$10,	
+		dislikes=$11
 	WHERE 
-		article_id=$8`,
+		article_id=$12`,
 		psql.tablename,
 	)
-
 	_, err = psql.db.Exec(
 		query,
 		res.Title,
@@ -349,11 +377,15 @@ func (psql *postgresDBClient) UpdateArticle(article_id string, article *domain.A
 		pq.Array(res.Tags),
 		res.PublishDate,
 		res.UpdatedDate,
-		res.Author,
+		string(authorJSON),
+		res.ArticleID,
+		res.Likes,
+		res.Dislikes,
 		res.ArticleID,
 	)
 
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 

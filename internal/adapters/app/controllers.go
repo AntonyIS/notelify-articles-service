@@ -104,6 +104,7 @@ func (h handler) UpdateArticle(ctx *gin.Context) {
 			"error": err.Error(),
 		})
 	}
+
 	response, err := h.svc.UpdateArticle(article_id, res)
 
 	if err != nil {
@@ -111,7 +112,7 @@ func (h handler) UpdateArticle(ctx *gin.Context) {
 			"error": err.Error(),
 		})
 	}
-	ctx.JSON(http.StatusOK, response)
+	ctx.JSON(http.StatusCreated, response)
 }
 
 func (h handler) DeleteArticle(ctx *gin.Context) {
